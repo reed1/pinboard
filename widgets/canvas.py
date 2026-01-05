@@ -411,3 +411,38 @@ class PinboardCanvas(QGraphicsView):
 
         self._scene.clearSelection()
         self._notes[next_id].setSelected(True)
+
+    def enter_edit_mode(self) -> bool:
+        item = self.get_selected_note()
+        if not item:
+            return False
+        item.enter_edit_mode()
+        return True
+
+    def exit_edit_mode(self) -> None:
+        for item in self._notes.values():
+            if item.is_editing():
+                item.exit_edit_mode()
+
+    def is_editing(self) -> bool:
+        for item in self._notes.values():
+            if item.is_editing():
+                return True
+        return False
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_Escape and self.is_editing():
+            self.exit_edit_mode()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def mousePressEvent(self, event) -> None:
+        if self.is_editing():
+            scene_pos = self.mapToScene(event.pos())
+            item = self._scene.itemAt(scene_pos, self.transform())
+            editing_item = self.get_selected_note()
+            if editing_item and editing_item.is_editing():
+                if item != editing_item and item != editing_item._text_item:
+                    self.exit_edit_mode()
+        super().mousePressEvent(event)

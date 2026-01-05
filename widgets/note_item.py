@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QInputDialog
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem
 
 MIN_WIDTH = 100
 MIN_HEIGHT = 60
@@ -17,6 +17,7 @@ class NoteSignals(QObject):
     resized = Signal(int, float, float, float, float)  # id, old_w, old_h, new_w, new_h
     text_changed = Signal(int, str, str)  # id, old_text, new_text
     changed = Signal()
+    edit_finished = Signal()
 
 
 class NoteItem(QGraphicsRectItem):
@@ -54,6 +55,10 @@ class NoteItem(QGraphicsRectItem):
         self._drag_start_rect = None
         self._move_start_pos = None
 
+        self._editing = False
+        self._text_item: QGraphicsTextItem | None = None
+        self._edit_start_text: str = ""
+
         self._update_appearance()
 
     def _update_appearance(self) -> None:
@@ -78,36 +83,38 @@ class NoteItem(QGraphicsRectItem):
         super().paint(painter, option, widget)
 
         rect = self.rect()
-        text_rect = rect.adjusted(PADDING, PADDING, -PADDING, -PADDING)
 
-        font = QFont("Sans", 10)
-        painter.setFont(font)
-        painter.setPen(QPen(QColor(30, 30, 30)))
+        if not self._editing:
+            text_rect = rect.adjusted(PADDING, PADDING, -PADDING, -PADDING)
 
-        metrics = QFontMetrics(font)
-        elided_lines = []
-        lines = self.text.split("\n")
-        available_height = text_rect.height()
-        line_height = metrics.lineSpacing()
-        max_lines = max(1, int(available_height / line_height))
+            font = QFont("Sans", 10)
+            painter.setFont(font)
+            painter.setPen(QPen(QColor(30, 30, 30)))
 
-        for i, line in enumerate(lines):
-            if i >= max_lines:
-                break
-            if i == max_lines - 1 and len(lines) > max_lines:
-                elided = metrics.elidedText(line + "...", Qt.TextElideMode.ElideRight, int(text_rect.width()))
-            else:
-                elided = metrics.elidedText(line, Qt.TextElideMode.ElideRight, int(text_rect.width()))
-            elided_lines.append(elided)
+            metrics = QFontMetrics(font)
+            elided_lines = []
+            lines = self.text.split("\n")
+            available_height = text_rect.height()
+            line_height = metrics.lineSpacing()
+            max_lines = max(1, int(available_height / line_height))
 
-        y_offset = text_rect.top()
-        for line in elided_lines:
-            painter.drawText(
-                int(text_rect.left()),
-                int(y_offset + metrics.ascent()),
-                line,
-            )
-            y_offset += line_height
+            for i, line in enumerate(lines):
+                if i >= max_lines:
+                    break
+                if i == max_lines - 1 and len(lines) > max_lines:
+                    elided = metrics.elidedText(line + "...", Qt.TextElideMode.ElideRight, int(text_rect.width()))
+                else:
+                    elided = metrics.elidedText(line, Qt.TextElideMode.ElideRight, int(text_rect.width()))
+                elided_lines.append(elided)
+
+            y_offset = text_rect.top()
+            for line in elided_lines:
+                painter.drawText(
+                    int(text_rect.left()),
+                    int(y_offset + metrics.ascent()),
+                    line,
+                )
+                y_offset += line_height
 
         if self.isSelected():
             r, g, b, a = SELECTION_BORDER_COLOR
@@ -222,20 +229,59 @@ class NoteItem(QGraphicsRectItem):
 
     def mouseDoubleClickEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self._edit_text()
+            self.enter_edit_mode()
             event.accept()
             return
         super().mouseDoubleClickEvent(event)
 
-    def _edit_text(self) -> None:
-        view = self.scene().views()[0] if self.scene() and self.scene().views() else None
-        old_text = self.text
-        new_text, ok = QInputDialog.getMultiLineText(view, "Edit Note", "Text:", self.text)
-        if ok and new_text != old_text:
+    def is_editing(self) -> bool:
+        return self._editing
+
+    def enter_edit_mode(self) -> None:
+        if self._editing:
+            return
+
+        self._editing = True
+        self._edit_start_text = self.text
+
+        self._text_item = QGraphicsTextItem(self)
+        self._text_item.setPlainText(self.text)
+        self._text_item.setFont(QFont("Sans", 10))
+        self._text_item.setDefaultTextColor(QColor(30, 30, 30))
+        self._text_item.setPos(PADDING, PADDING)
+        self._text_item.setTextWidth(self.rect().width() - PADDING * 2)
+        self._text_item.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
+        self._text_item.setFocus()
+
+        cursor = self._text_item.textCursor()
+        cursor.movePosition(cursor.MoveOperation.End)
+        self._text_item.setTextCursor(cursor)
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+        self.update()
+
+    def exit_edit_mode(self) -> None:
+        if not self._editing or not self._text_item:
+            return
+
+        new_text = self._text_item.toPlainText()
+
+        self._text_item.setParentItem(None)
+        if self.scene():
+            self.scene().removeItem(self._text_item)
+        self._text_item = None
+        self._editing = False
+
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+
+        if new_text != self._edit_start_text:
             self.text = new_text
-            self.update()
-            self.signals.text_changed.emit(self.note_id, old_text, new_text)
+            self.signals.text_changed.emit(self.note_id, self._edit_start_text, new_text)
             self.signals.changed.emit()
+
+        self._edit_start_text = ""
+        self.update()
+        self.signals.edit_finished.emit()
 
     def hoverMoveEvent(self, event) -> None:
         if self.isSelected():
