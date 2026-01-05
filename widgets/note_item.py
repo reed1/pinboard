@@ -8,6 +8,8 @@ MIN_WIDTH = 100
 MIN_HEIGHT = 60
 HANDLE_SIZE = 10
 PADDING = 8
+SELECTION_BORDER_WIDTH = 3
+SELECTION_BORDER_COLOR = (0, 150, 255, 255)
 
 
 class NoteSignals(QObject):
@@ -72,9 +74,7 @@ class NoteItem(QGraphicsRectItem):
         self.text = text
         self.update()
 
-    def paint(
-        self, painter: QPainter, option, widget=None
-    ) -> None:
+    def paint(self, painter: QPainter, option, widget=None) -> None:
         super().paint(painter, option, widget)
 
         rect = self.rect()
@@ -95,13 +95,9 @@ class NoteItem(QGraphicsRectItem):
             if i >= max_lines:
                 break
             if i == max_lines - 1 and len(lines) > max_lines:
-                elided = metrics.elidedText(
-                    line + "...", Qt.TextElideMode.ElideRight, int(text_rect.width())
-                )
+                elided = metrics.elidedText(line + "...", Qt.TextElideMode.ElideRight, int(text_rect.width()))
             else:
-                elided = metrics.elidedText(
-                    line, Qt.TextElideMode.ElideRight, int(text_rect.width())
-                )
+                elided = metrics.elidedText(line, Qt.TextElideMode.ElideRight, int(text_rect.width()))
             elided_lines.append(elided)
 
         y_offset = text_rect.top()
@@ -114,6 +110,13 @@ class NoteItem(QGraphicsRectItem):
             y_offset += line_height
 
         if self.isSelected():
+            r, g, b, a = SELECTION_BORDER_COLOR
+            selection_pen = QPen(QColor(r, g, b, a), SELECTION_BORDER_WIDTH)
+            painter.setPen(selection_pen)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            inset = SELECTION_BORDER_WIDTH / 2
+            painter.drawRect(rect.adjusted(inset, inset, -inset, -inset))
+
             for corner in ["tl", "tr", "bl", "br"]:
                 handle_rect = self._get_handle_rect(corner)
                 painter.fillRect(handle_rect, QColor(80, 80, 80))
@@ -123,13 +126,9 @@ class NoteItem(QGraphicsRectItem):
         if corner == "tl":
             return QRectF(rect.left(), rect.top(), HANDLE_SIZE, HANDLE_SIZE)
         if corner == "tr":
-            return QRectF(
-                rect.right() - HANDLE_SIZE, rect.top(), HANDLE_SIZE, HANDLE_SIZE
-            )
+            return QRectF(rect.right() - HANDLE_SIZE, rect.top(), HANDLE_SIZE, HANDLE_SIZE)
         if corner == "bl":
-            return QRectF(
-                rect.left(), rect.bottom() - HANDLE_SIZE, HANDLE_SIZE, HANDLE_SIZE
-            )
+            return QRectF(rect.left(), rect.bottom() - HANDLE_SIZE, HANDLE_SIZE, HANDLE_SIZE)
         if corner == "br":
             return QRectF(
                 rect.right() - HANDLE_SIZE,
@@ -215,9 +214,7 @@ class NoteItem(QGraphicsRectItem):
             old_pos = self._move_start_pos
             new_pos = self.pos()
             if old_pos != new_pos:
-                self.signals.moved.emit(
-                    self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y()
-                )
+                self.signals.moved.emit(self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y())
                 self.signals.changed.emit()
             self._move_start_pos = None
 
@@ -233,9 +230,7 @@ class NoteItem(QGraphicsRectItem):
     def _edit_text(self) -> None:
         view = self.scene().views()[0] if self.scene() and self.scene().views() else None
         old_text = self.text
-        new_text, ok = QInputDialog.getMultiLineText(
-            view, "Edit Note", "Text:", self.text
-        )
+        new_text, ok = QInputDialog.getMultiLineText(view, "Edit Note", "Text:", self.text)
         if ok and new_text != old_text:
             self.text = new_text
             self.update()

@@ -11,19 +11,10 @@ from models.note import Note
 @dataclass
 class Config:
     palette: list[tuple[int, int, int, int]]
+    canvas_background: tuple[int, int, int, int]
     default_width: int
     default_height: int
     padding: int
-
-
-DEFAULT_PALETTE = [
-    (255, 255, 200, 255),
-    (200, 255, 200, 255),
-    (200, 230, 255, 255),
-    (255, 220, 200, 255),
-    (230, 200, 255, 255),
-    (255, 200, 220, 255),
-]
 
 
 def load_notes(filepath: Path) -> tuple[list[Note], int]:
@@ -52,31 +43,28 @@ def save_notes(filepath: Path, notes: list[Note], next_id: int) -> None:
 
 def load_config(filepath: Path) -> Config:
     if not filepath.exists():
-        return Config(
-            palette=DEFAULT_PALETTE,
-            default_width=180,
-            default_height=120,
-            padding=20,
-        )
+        raise FileNotFoundError(f"Config file not found: {filepath}")
 
     with open(filepath, "r") as f:
         data = yaml.safe_load(f)
 
     if not data:
-        return Config(
-            palette=DEFAULT_PALETTE,
-            default_width=180,
-            default_height=120,
-            padding=20,
-        )
+        raise ValueError(f"Config file is empty: {filepath}")
 
-    palette = [tuple(c) for c in data.get("palette", DEFAULT_PALETTE)]
+    if "palette" not in data:
+        raise ValueError("Config must contain 'palette'")
+    if "canvas_background" not in data:
+        raise ValueError("Config must contain 'canvas_background'")
+
+    palette = [tuple(c) for c in data["palette"]]
+    canvas_background = tuple(data["canvas_background"])
     default_width = data.get("default_width", 180)
     default_height = data.get("default_height", 120)
     padding = data.get("padding", 20)
 
     return Config(
         palette=palette,
+        canvas_background=canvas_background,
         default_width=default_width,
         default_height=default_height,
         padding=padding,

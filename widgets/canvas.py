@@ -5,7 +5,7 @@ from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QAction, QColor, QPainter
-from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QMenu
+from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
 from models.note import Note
 from storage.yaml_storage import Config
@@ -33,7 +33,8 @@ class PinboardCanvas(QGraphicsView):
         super().__init__()
 
         self._scene = QGraphicsScene()
-        self._scene.setBackgroundBrush(QColor(240, 240, 240))
+        r, g, b, a = config.canvas_background
+        self._scene.setBackgroundBrush(QColor(r, g, b, a))
         self.setScene(self._scene)
 
         self._config = config
@@ -42,9 +43,7 @@ class PinboardCanvas(QGraphicsView):
         self._next_id = 1
 
         self.setRenderHints(
-            self.renderHints()
-            | QPainter.RenderHint.Antialiasing
-            | QPainter.RenderHint.SmoothPixmapTransform
+            self.renderHints() | QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform
         )
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -253,9 +252,7 @@ class PinboardCanvas(QGraphicsView):
             self._notes[note_id].set_order(order)
             self.notes_changed.emit()
 
-    def _update_note_color(
-        self, note_id: int, color: tuple[int, int, int, int]
-    ) -> None:
+    def _update_note_color(self, note_id: int, color: tuple[int, int, int, int]) -> None:
         if note_id in self._notes:
             self._notes[note_id].set_color(color)
             self.notes_changed.emit()
@@ -275,9 +272,7 @@ class PinboardCanvas(QGraphicsView):
             self._notes[note_id].set_text(text)
             self.notes_changed.emit()
 
-    def _on_note_moved(
-        self, note_id: int, old_x: float, old_y: float, new_x: float, new_y: float
-    ) -> None:
+    def _on_note_moved(self, note_id: int, old_x: float, old_y: float, new_x: float, new_y: float) -> None:
         action = MoveNoteAction(
             note_id=note_id,
             old_x=old_x,
@@ -288,9 +283,7 @@ class PinboardCanvas(QGraphicsView):
         )
         self._undo_manager.push(action)
 
-    def _on_note_resized(
-        self, note_id: int, old_w: float, old_h: float, new_w: float, new_h: float
-    ) -> None:
+    def _on_note_resized(self, note_id: int, old_w: float, old_h: float, new_w: float, new_h: float) -> None:
         action = ResizeNoteAction(
             note_id=note_id,
             old_width=old_w,
@@ -301,9 +294,7 @@ class PinboardCanvas(QGraphicsView):
         )
         self._undo_manager.push(action)
 
-    def _on_note_text_changed(
-        self, note_id: int, old_text: str, new_text: str
-    ) -> None:
+    def _on_note_text_changed(self, note_id: int, old_text: str, new_text: str) -> None:
         action = EditTextAction(
             note_id=note_id,
             old_text=old_text,
@@ -355,3 +346,68 @@ class PinboardCanvas(QGraphicsView):
             menu.addAction(new_note_action)
 
         menu.exec(event.globalPos())
+
+    def get_selected_note(self) -> NoteItem | None:
+        selected = self._scene.selectedItems()
+        if selected and isinstance(selected[0], NoteItem):
+            return selected[0]
+        return None
+
+    def yank_selected(self) -> bool:
+        item = self.get_selected_note()
+        if not item:
+            return False
+        clipboard = QApplication.clipboard()
+        clipboard.setText(item.text)
+        return True
+
+    def delete_selected(self) -> bool:
+        item = self.get_selected_note()
+        if not item:
+            return False
+        self._delete_note(item)
+        return True
+
+    def paste_as_new_note(self) -> bool:
+        clipboard = QApplication.clipboard()
+        text = clipboard.text()
+        if not text:
+            return False
+
+        color = random.choice(self._config.palette)
+        order = self._get_max_order() + 1
+        x, y = self._calculate_new_note_position()
+
+        note = Note(
+            id=self._next_id,
+            x=x,
+            y=y,
+            width=self._config.default_width,
+            height=self._config.default_height,
+            text=text,
+            order=order,
+            color=color,
+        )
+        self._next_id += 1
+        item = self._add_note_item(note, record_undo=True)
+        self._scene.clearSelection()
+        item.setSelected(True)
+        self.notes_changed.emit()
+        return True
+
+    def select_next_note(self) -> None:
+        if not self._notes:
+            return
+
+        sorted_ids = sorted(self._notes.keys())
+        current = self.get_selected_note()
+
+        if current is None:
+            next_id = sorted_ids[0]
+        else:
+            current_idx = sorted_ids.index(current.note_id)
+            next_idx = (current_idx + 1) % len(sorted_ids)
+            next_id = sorted_ids[next_idx]
+
+        self._scene.clearSelection()
+        self._notes[next_id].setSelected(True)
