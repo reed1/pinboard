@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from storage.yaml_storage import load_config, load_notes, save_notes
 from undo_manager import UndoManager
@@ -74,39 +74,17 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
-def get_file_path() -> Path | None:
-    if len(sys.argv) > 1:
-        return Path(sys.argv[1])
-
-    app = QApplication.instance()
-    if not app:
-        app = QApplication(sys.argv)
-
-    file_path, _ = QFileDialog.getSaveFileName(
-        None,
-        "Open or Create Pinboard",
-        "",
-        "YAML Files (*.yaml *.yml);;All Files (*)",
-    )
-
-    if not file_path:
-        return None
-
-    return Path(file_path)
-
-
 def main() -> None:
-    app = QApplication.instance()
-    if not app:
-        app = QApplication(sys.argv)
+    if len(sys.argv) < 2:
+        print("Error: YAML file path is required", file=sys.stderr)
+        print("Usage: pinboard <path/to/notes.yaml>", file=sys.stderr)
+        sys.exit(1)
 
-    file_path = get_file_path()
-    if not file_path:
-        sys.exit(0)
+    file_path = Path(sys.argv[1])
 
+    app = QApplication(sys.argv)
     window = MainWindow(file_path)
     window.show()
-
     sys.exit(app.exec())
 
 
