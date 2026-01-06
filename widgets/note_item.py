@@ -20,6 +20,19 @@ class NoteSignals(QObject):
     edit_finished = Signal()
 
 
+class EditableTextItem(QGraphicsTextItem):
+    enter_pressed = Signal()
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+                super().keyPressEvent(event)
+            else:
+                self.enter_pressed.emit()
+            return
+        super().keyPressEvent(event)
+
+
 class NoteItem(QGraphicsRectItem):
     def __init__(
         self,
@@ -62,7 +75,7 @@ class NoteItem(QGraphicsRectItem):
         self._move_start_pos = None
 
         self._editing = False
-        self._text_item: QGraphicsTextItem | None = None
+        self._text_item: EditableTextItem | None = None
         self._edit_start_text: str = ""
 
         self._update_appearance()
@@ -245,7 +258,7 @@ class NoteItem(QGraphicsRectItem):
         self._editing = True
         self._edit_start_text = self.text
 
-        self._text_item = QGraphicsTextItem(self)
+        self._text_item = EditableTextItem(self)
         self._text_item.setPlainText(self.text)
         self._text_item.setFont(QFont(self.font_family, self.font_size))
         r, g, b, a = self.text_color
@@ -254,6 +267,7 @@ class NoteItem(QGraphicsRectItem):
         self._text_item.setTextWidth(self.rect().width() - PADDING * 2)
         self._text_item.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
         self._text_item.setFocus()
+        self._text_item.enter_pressed.connect(self.exit_edit_mode)
 
         cursor = self._text_item.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)

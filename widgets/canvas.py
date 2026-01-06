@@ -65,6 +65,11 @@ class PinboardCanvas(QGraphicsView):
             self.verticalScrollBar().setValue(0)
         super().paintEvent(event)
 
+    def reset_viewport(self) -> None:
+        self.resetTransform()
+        self.horizontalScrollBar().setValue(0)
+        self.verticalScrollBar().setValue(0)
+
     def load_notes(self, notes: list[Note], next_id: int) -> None:
         self._scene.clear()
         self._notes.clear()
@@ -124,35 +129,31 @@ class PinboardCanvas(QGraphicsView):
 
         return item
 
-    def _calculate_new_note_position(self) -> tuple[float, float]:
+    def _calculate_position_right(self) -> tuple[float, float]:
         padding = self._config.padding
-        default_width = self._config.default_width
-        default_height = self._config.default_height
-        window_width = self.viewport().width()
-
+        selected = self.get_selected_note()
+        if selected:
+            return (selected.pos().x() + selected.rect().width() + padding, selected.pos().y())
         if not self._notes:
             return (padding, padding)
-
         max_id = max(self._notes.keys())
         last_note = self._notes[max_id]
-        last_x = last_note.pos().x()
-        last_y = last_note.pos().y()
-        last_width = last_note.rect().width()
-        last_height = last_note.rect().height()
+        return (last_note.pos().x() + last_note.rect().width() + padding, last_note.pos().y())
 
-        new_x = last_x + last_width + padding
-        new_y = last_y
+    def _calculate_position_below(self) -> tuple[float, float]:
+        padding = self._config.padding
+        selected = self.get_selected_note()
+        if selected:
+            return (selected.pos().x(), selected.pos().y() + selected.rect().height() + padding)
+        if not self._notes:
+            return (padding, padding)
+        max_id = max(self._notes.keys())
+        last_note = self._notes[max_id]
+        return (last_note.pos().x(), last_note.pos().y() + last_note.rect().height() + padding)
 
-        if new_x + default_width > window_width:
-            new_x = padding
-            new_y = last_y + last_height + padding
-
-        return (new_x, new_y)
-
-    def _create_note(self) -> NoteItem:
+    def _create_note_at(self, x: float, y: float) -> NoteItem:
         color = random.choice(self._config.palette)
         order = self._get_max_order() + 1
-        x, y = self._calculate_new_note_position()
 
         note = Note(
             id=self._next_id,
@@ -385,7 +386,7 @@ class PinboardCanvas(QGraphicsView):
 
         color = random.choice(self._config.palette)
         order = self._get_max_order() + 1
-        x, y = self._calculate_new_note_position()
+        x, y = self._calculate_position_right()
 
         note = Note(
             id=self._next_id,
@@ -424,8 +425,16 @@ class PinboardCanvas(QGraphicsView):
     def deselect_all(self) -> None:
         self._scene.clearSelection()
 
-    def create_note_and_edit(self) -> None:
-        item = self._create_note()
+    def create_note_right_and_edit(self) -> None:
+        x, y = self._calculate_position_right()
+        item = self._create_note_at(x, y)
+        self._scene.clearSelection()
+        item.setSelected(True)
+        item.enter_edit_mode()
+
+    def create_note_below_and_edit(self) -> None:
+        x, y = self._calculate_position_below()
+        item = self._create_note_at(x, y)
         self._scene.clearSelection()
         item.setSelected(True)
         item.enter_edit_mode()

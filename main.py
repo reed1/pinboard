@@ -32,7 +32,9 @@ class MainWindow(QMainWindow):
 
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
-        self._show_status("I:insert  E:edit  Y:yank  P:paste  X/Del:delete  Tab:next  U:undo  Q:quit", 0)
+        self._show_status(
+            "I:insert right  O:insert below  E:edit  Y:yank  P:paste  X:del  Backspace:reset view  Q:quit", 0
+        )
 
         notes, next_id = load_notes(file_path)
         self._canvas.load_notes(notes, next_id)
@@ -79,13 +81,19 @@ class MainWindow(QMainWindow):
         undo_shortcut_u.activated.connect(self._undo)
 
         insert_shortcut = QShortcut(QKeySequence("I"), self)
-        insert_shortcut.activated.connect(self._insert)
+        insert_shortcut.activated.connect(self._insert_right)
+
+        insert_below_shortcut = QShortcut(QKeySequence("O"), self)
+        insert_below_shortcut.activated.connect(self._insert_below)
 
         edit_shortcut = QShortcut(QKeySequence("E"), self)
         edit_shortcut.activated.connect(self._edit)
 
         esc_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         esc_shortcut.activated.connect(self._escape)
+
+        backspace_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Backspace), self)
+        backspace_shortcut.activated.connect(self._reset_viewport)
 
     def _undo(self) -> None:
         if self._canvas.is_editing():
@@ -124,10 +132,16 @@ class MainWindow(QMainWindow):
             return
         self._canvas.select_next_note()
 
-    def _insert(self) -> None:
+    def _insert_right(self) -> None:
         if self._canvas.is_editing():
             return
-        self._canvas.create_note_and_edit()
+        self._canvas.create_note_right_and_edit()
+        self._show_status("Editing (Esc to finish)")
+
+    def _insert_below(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.create_note_below_and_edit()
         self._show_status("Editing (Esc to finish)")
 
     def _edit(self) -> None:
@@ -141,6 +155,12 @@ class MainWindow(QMainWindow):
             self._canvas.exit_edit_mode()
         else:
             self._canvas.deselect_all()
+
+    def _reset_viewport(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.reset_viewport()
+        self._show_status("Viewport reset")
 
     def _quit(self) -> None:
         if self._canvas.is_editing():

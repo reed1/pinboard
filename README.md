@@ -34,7 +34,9 @@ The YAML file will be created if it doesn't exist.
 |--------|-------|
 | Pan canvas | Drag empty space |
 | Zoom | Mouse wheel |
-| Create note | Right-click empty space → "New Note", or `I` |
+| Reset viewport | `Backspace` |
+| Create note (right) | Right-click empty space → "New Note", or `I` |
+| Create note (below) | `O` |
 | Move note | Drag note |
 | Resize note | Click to select, drag corners |
 | Edit text | Double-click, or `E` |
