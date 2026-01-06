@@ -102,6 +102,8 @@ class PinboardCanvas(QGraphicsView):
             order=note.order,
             color=note.color,
             text_color=self._config.text_color,
+            font_family=self._config.font_family,
+            font_size=self._config.font_size,
         )
         self._scene.addItem(item)
         self._notes[note.id] = item

@@ -60,6 +60,9 @@ palette:
   - [230, 200, 255, 255]  # Light purple
   - [255, 200, 220, 255]  # Light pink
 
+font_family: Roboto
+font_size: 12
+
 default_width: 180
 default_height: 120
 padding: 20

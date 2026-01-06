@@ -9,6 +9,9 @@ palette:
 text_color: [240, 240, 240, 255]  # Light gray text
 canvas_background: [30, 30, 30, 255]  # Dark gray
 
-default_width: 180
-default_height: 120
+font_family: Roboto
+font_size: 16
+
+default_width: 240
+default_height: 160
 padding: 20

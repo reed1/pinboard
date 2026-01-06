@@ -32,6 +32,8 @@ class NoteItem(QGraphicsRectItem):
         order: int,
         color: tuple[int, int, int, int],
         text_color: tuple[int, int, int, int],
+        font_family: str,
+        font_size: int,
     ):
         super().__init__(0, 0, width, height)
         self.setPos(x, y)
@@ -41,6 +43,8 @@ class NoteItem(QGraphicsRectItem):
         self.order = order
         self.color = color
         self.text_color = text_color
+        self.font_family = font_family
+        self.font_size = font_size
 
         self.signals = NoteSignals()
 
@@ -90,7 +94,7 @@ class NoteItem(QGraphicsRectItem):
         if not self._editing:
             text_rect = rect.adjusted(PADDING, PADDING, -PADDING, -PADDING)
 
-            font = QFont("Sans", 10)
+            font = QFont(self.font_family, self.font_size)
             painter.setFont(font)
             r, g, b, a = self.text_color
             painter.setPen(QPen(QColor(r, g, b, a)))
@@ -243,7 +247,7 @@ class NoteItem(QGraphicsRectItem):
 
         self._text_item = QGraphicsTextItem(self)
         self._text_item.setPlainText(self.text)
-        self._text_item.setFont(QFont("Sans", 10))
+        self._text_item.setFont(QFont(self.font_family, self.font_size))
         r, g, b, a = self.text_color
         self._text_item.setDefaultTextColor(QColor(r, g, b, a))
         self._text_item.setPos(PADDING, PADDING)

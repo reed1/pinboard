@@ -13,6 +13,8 @@ class Config:
     palette: list[tuple[int, int, int, int]]
     text_color: tuple[int, int, int, int]
     canvas_background: tuple[int, int, int, int]
+    font_family: str
+    font_size: int
     default_width: int
     default_height: int
     padding: int
@@ -62,6 +64,8 @@ def load_config(filepath: Path) -> Config:
     palette = [tuple(c) for c in data["palette"]]
     text_color = tuple(data["text_color"])
     canvas_background = tuple(data["canvas_background"])
+    font_family = data.get("font_family", "Sans")
+    font_size = data.get("font_size", 10)
     default_width = data.get("default_width", 180)
     default_height = data.get("default_height", 120)
     padding = data.get("padding", 20)
@@ -70,6 +74,8 @@ def load_config(filepath: Path) -> Config:
         palette=palette,
         text_color=text_color,
         canvas_background=canvas_background,
+        font_family=font_family,
+        font_size=font_size,
         default_width=default_width,
         default_height=default_height,
         padding=padding,
