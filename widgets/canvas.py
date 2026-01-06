@@ -4,7 +4,7 @@ import random
 from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QColor, QKeyEvent, QPainter
+from PySide6.QtGui import QAction, QColor, QPainter
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
 from models.note import Note
@@ -57,30 +57,6 @@ class PinboardCanvas(QGraphicsView):
     def mousePressEvent(self, event) -> None:
         self.setFocus()
         super().mousePressEvent(event)
-
-    def keyPressEvent(self, event: QKeyEvent) -> None:
-        if event.key() == Qt.Key.Key_Escape:
-            for item in self._scene.selectedItems():
-                if isinstance(item, NoteItem):
-                    if item.is_editing():
-                        item.exit_edit_mode()
-                    else:
-                        item.setSelected(False)
-            event.accept()
-            return
-
-        if event.key() == Qt.Key.Key_I:
-            editing = any(isinstance(item, NoteItem) and item.is_editing() for item in self._scene.items())
-            if not editing:
-                note_item = self._create_note()
-                if note_item:
-                    self._scene.clearSelection()
-                    note_item.setSelected(True)
-                    note_item.enter_edit_mode()
-                event.accept()
-                return
-
-        super().keyPressEvent(event)
 
     def _update_scene_rect(self) -> None:
         view_rect = self.viewport().rect()

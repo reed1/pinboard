@@ -7,7 +7,7 @@ A lightweight desktop sticky notes application with YAML-based storage for easy 
 - **Sticky Notes** - Create, move, resize, and delete notes
 - **Drag & Drop** - Move notes by dragging
 - **Resize** - Drag corner handles to resize
-- **Text Editing** - Double-click to edit note text
+- **Text Editing** - Double-click or press E to edit note text
 - **Color Palette** - Right-click to change note colors (configurable pastel palette)
 - **Z-Ordering** - Bring to front / send to back via right-click menu
 - **Undo/Redo** - Ctrl+Z / Ctrl+Shift+Z
@@ -32,16 +32,20 @@ The YAML file will be created if it doesn't exist.
 
 | Action | Input |
 |--------|-------|
-| Create note | Right-click empty space → "New Note" |
+| Create note | Right-click empty space → "New Note", or `I` |
 | Move note | Drag |
 | Resize note | Click to select, drag corners |
-| Edit text | Double-click |
-| Delete note | Right-click → "Delete" |
+| Edit text | Double-click, or `E` |
+| Delete note | Right-click → "Delete", or `X` / `Del` |
 | Bring to front | Right-click → "Bring to Front" |
 | Send to back | Right-click → "Send to Back" |
 | Change color | Right-click → "Change Color" |
-| Undo | Ctrl+Z |
-| Redo | Ctrl+Shift+Z |
+| Yank (copy) text | `Y` |
+| Paste as new note | `P` |
+| Select next note | `Tab` |
+| Undo | `Ctrl+Z` or `U` |
+| Redo | `Ctrl+Shift+Z` |
+| Quit | `Q` |
 
 ## Configuration
 

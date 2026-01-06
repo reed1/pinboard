@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
 
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
-        self._show_status("I/E:edit  Y:yank  P:paste  X/Del:delete  Tab:next  U:undo  Q:quit", 0)
+        self._show_status("I:insert  E:edit  Y:yank  P:paste  X/Del:delete  Tab:next  U:undo  Q:quit", 0)
 
         notes, next_id = load_notes(file_path)
         self._canvas.load_notes(notes, next_id)
@@ -78,11 +78,11 @@ class MainWindow(QMainWindow):
         undo_shortcut_u = QShortcut(QKeySequence("U"), self)
         undo_shortcut_u.activated.connect(self._undo)
 
-        edit_shortcut_i = QShortcut(QKeySequence("I"), self)
-        edit_shortcut_i.activated.connect(self._edit)
+        insert_shortcut = QShortcut(QKeySequence("I"), self)
+        insert_shortcut.activated.connect(self._insert)
 
-        edit_shortcut_e = QShortcut(QKeySequence("E"), self)
-        edit_shortcut_e.activated.connect(self._edit)
+        edit_shortcut = QShortcut(QKeySequence("E"), self)
+        edit_shortcut.activated.connect(self._edit)
 
         esc_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         esc_shortcut.activated.connect(self._escape)
@@ -124,13 +124,16 @@ class MainWindow(QMainWindow):
             return
         self._canvas.select_next_note()
 
+    def _insert(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.create_note_and_edit()
+        self._show_status("Editing (Esc to finish)")
+
     def _edit(self) -> None:
         if self._canvas.is_editing():
             return
-        if not self._canvas.get_selected_note():
-            self._canvas.create_note_and_edit()
-            self._show_status("Editing (Esc to finish)")
-        elif self._canvas.enter_edit_mode():
+        if self._canvas.enter_edit_mode():
             self._show_status("Editing (Esc to finish)")
 
     def _escape(self) -> None:
