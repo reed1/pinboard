@@ -32,8 +32,10 @@ The YAML file will be created if it doesn't exist.
 
 | Action | Input |
 |--------|-------|
+| Pan canvas | Drag empty space |
+| Zoom | Mouse wheel |
 | Create note | Right-click empty space → "New Note", or `I` |
-| Move note | Drag |
+| Move note | Drag note |
 | Resize note | Click to select, drag corners |
 | Edit text | Double-click, or `E` |
 | Delete note | Right-click → "Delete", or `X` / `Del` |

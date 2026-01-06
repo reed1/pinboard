@@ -3,8 +3,8 @@ from __future__ import annotations
 import random
 from typing import Callable
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QColor, QPainter
+from PySide6.QtCore import Qt, Signal, QPointF
+from PySide6.QtGui import QAction, QColor, QPainter, QWheelEvent
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
 from models.note import Note
@@ -33,6 +33,7 @@ class PinboardCanvas(QGraphicsView):
         super().__init__()
 
         self._scene = QGraphicsScene()
+        self._scene.setSceneRect(-5000, -5000, 25000, 25000)
         r, g, b, a = config.canvas_background
         self._scene.setBackgroundBrush(QColor(r, g, b, a))
         self.setScene(self._scene)
@@ -42,28 +43,27 @@ class PinboardCanvas(QGraphicsView):
         self._notes: dict[int, NoteItem] = {}
         self._next_id = 1
 
+        self._panning = False
+        self._pan_start: QPointF | None = None
+
         self.setRenderHints(
             self.renderHints() | QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform
         )
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
-        self.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        self._update_scene_rect()
+        self._viewport_initialized = False
 
-    def mousePressEvent(self, event) -> None:
-        self.setFocus()
-        super().mousePressEvent(event)
-
-    def _update_scene_rect(self) -> None:
-        view_rect = self.viewport().rect()
-        current_rect = self._scene.sceneRect()
-        new_width = max(view_rect.width(), current_rect.width())
-        new_height = max(view_rect.height(), current_rect.height())
-        self._scene.setSceneRect(0, 0, new_width, new_height)
+    def paintEvent(self, event) -> None:
+        if not self._viewport_initialized:
+            self._viewport_initialized = True
+            self.horizontalScrollBar().setValue(0)
+            self.verticalScrollBar().setValue(0)
+        super().paintEvent(event)
 
     def load_notes(self, notes: list[Note], next_id: int) -> None:
         self._scene.clear()
@@ -458,7 +458,19 @@ class PinboardCanvas(QGraphicsView):
             return
         super().keyPressEvent(event)
 
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        if self.is_editing():
+            return
+
+        zoom_factor = 1.15
+        if event.angleDelta().y() > 0:
+            self.scale(zoom_factor, zoom_factor)
+        else:
+            self.scale(1 / zoom_factor, 1 / zoom_factor)
+
     def mousePressEvent(self, event) -> None:
+        self.setFocus()
+
         if self.is_editing():
             scene_pos = self.mapToScene(event.pos())
             item = self._scene.itemAt(scene_pos, self.transform())
@@ -466,4 +478,36 @@ class PinboardCanvas(QGraphicsView):
             if editing_item and editing_item.is_editing():
                 if item != editing_item and item != editing_item._text_item:
                     self.exit_edit_mode()
+            super().mousePressEvent(event)
+            return
+
+        if event.button() == Qt.MouseButton.LeftButton:
+            scene_pos = self.mapToScene(event.pos())
+            item = self._scene.itemAt(scene_pos, self.transform())
+            if not isinstance(item, NoteItem):
+                self._panning = True
+                self._pan_start = event.position()
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+                event.accept()
+                return
+
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._panning and self._pan_start is not None:
+            delta = event.position() - self._pan_start
+            self._pan_start = event.position()
+            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - int(delta.x()))
+            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - int(delta.y()))
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self._panning:
+            self._panning = False
+            self._pan_start = None
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
