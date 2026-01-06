@@ -1,13 +1,14 @@
 palette:
-  - [70, 70, 50, 255]     # Dark olive
-  - [50, 70, 50, 255]     # Dark green
-  - [50, 60, 80, 255]     # Dark blue
-  - [80, 60, 50, 255]     # Dark brown
-  - [65, 50, 75, 255]     # Dark purple
-  - [75, 50, 60, 255]     # Dark rose
+  - [255, 230, 180, 255]  # Pastel yellow
+  - [180, 230, 180, 255]  # Pastel green
+  - [180, 210, 255, 255]  # Pastel blue
+  - [255, 200, 180, 255]  # Pastel peach
+  - [220, 190, 255, 255]  # Pastel purple
+  - [255, 200, 220, 255]  # Pastel pink
 
-text_color: [240, 240, 240, 255]  # Light gray text
-canvas_background: [30, 30, 30, 255]  # Dark gray
+text_color: [40, 40, 40, 255]  # Dark gray text
+# canvas_background: [140, 140, 140, 255]  # Darker gray
+canvas_background: [40, 40, 40, 255]  # Darker gray
 
 font_family: Roboto
 font_size: 16
