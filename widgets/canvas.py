@@ -4,7 +4,7 @@ import random
 from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QAction, QColor, QPainter
+from PySide6.QtGui import QAction, QColor, QKeyEvent, QPainter
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
 from models.note import Note
@@ -48,10 +48,39 @@ class PinboardCanvas(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._update_scene_rect()
+
+    def mousePressEvent(self, event) -> None:
+        self.setFocus()
+        super().mousePressEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Escape:
+            for item in self._scene.selectedItems():
+                if isinstance(item, NoteItem):
+                    if item.is_editing():
+                        item.exit_edit_mode()
+                    else:
+                        item.setSelected(False)
+            event.accept()
+            return
+
+        if event.key() == Qt.Key.Key_I:
+            editing = any(isinstance(item, NoteItem) and item.is_editing() for item in self._scene.items())
+            if not editing:
+                note_item = self._create_note()
+                if note_item:
+                    self._scene.clearSelection()
+                    note_item.setSelected(True)
+                    note_item.enter_edit_mode()
+                event.accept()
+                return
+
+        super().keyPressEvent(event)
 
     def _update_scene_rect(self) -> None:
         view_rect = self.viewport().rect()
@@ -96,6 +125,7 @@ class PinboardCanvas(QGraphicsView):
             text=note.text,
             order=note.order,
             color=note.color,
+            text_color=self._config.text_color,
         )
         self._scene.addItem(item)
         self._notes[note.id] = item
@@ -141,7 +171,7 @@ class PinboardCanvas(QGraphicsView):
 
         return (new_x, new_y)
 
-    def _create_note(self) -> None:
+    def _create_note(self) -> NoteItem:
         color = random.choice(self._config.palette)
         order = self._get_max_order() + 1
         x, y = self._calculate_new_note_position()
@@ -157,8 +187,9 @@ class PinboardCanvas(QGraphicsView):
             color=color,
         )
         self._next_id += 1
-        self._add_note_item(note, record_undo=True)
+        item = self._add_note_item(note, record_undo=True)
         self.notes_changed.emit()
+        return item
 
     def _delete_note_by_id(self, note_id: int) -> None:
         if note_id in self._notes:
@@ -412,6 +443,15 @@ class PinboardCanvas(QGraphicsView):
         self._scene.clearSelection()
         self._notes[next_id].setSelected(True)
 
+    def deselect_all(self) -> None:
+        self._scene.clearSelection()
+
+    def create_note_and_edit(self) -> None:
+        item = self._create_note()
+        self._scene.clearSelection()
+        item.setSelected(True)
+        item.enter_edit_mode()
+
     def enter_edit_mode(self) -> bool:
         item = self.get_selected_note()
         if not item:
@@ -431,8 +471,11 @@ class PinboardCanvas(QGraphicsView):
         return False
 
     def keyPressEvent(self, event) -> None:
-        if event.key() == Qt.Key.Key_Escape and self.is_editing():
-            self.exit_edit_mode()
+        if event.key() == Qt.Key.Key_Escape:
+            if self.is_editing():
+                self.exit_edit_mode()
+            else:
+                self._scene.clearSelection()
             event.accept()
             return
         super().keyPressEvent(event)

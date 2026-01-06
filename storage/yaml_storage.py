@@ -11,6 +11,7 @@ from models.note import Note
 @dataclass
 class Config:
     palette: list[tuple[int, int, int, int]]
+    text_color: tuple[int, int, int, int]
     canvas_background: tuple[int, int, int, int]
     default_width: int
     default_height: int
@@ -53,10 +54,13 @@ def load_config(filepath: Path) -> Config:
 
     if "palette" not in data:
         raise ValueError("Config must contain 'palette'")
+    if "text_color" not in data:
+        raise ValueError("Config must contain 'text_color'")
     if "canvas_background" not in data:
         raise ValueError("Config must contain 'canvas_background'")
 
     palette = [tuple(c) for c in data["palette"]]
+    text_color = tuple(data["text_color"])
     canvas_background = tuple(data["canvas_background"])
     default_width = data.get("default_width", 180)
     default_height = data.get("default_height", 120)
@@ -64,6 +68,7 @@ def load_config(filepath: Path) -> Config:
 
     return Config(
         palette=palette,
+        text_color=text_color,
         canvas_background=canvas_background,
         default_width=default_width,
         default_height=default_height,

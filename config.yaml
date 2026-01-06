@@ -1,12 +1,13 @@
 palette:
-  - [255, 255, 200, 255]  # Light yellow
-  - [200, 255, 200, 255]  # Light green
-  - [200, 230, 255, 255]  # Light blue
-  - [255, 220, 200, 255]  # Light peach
-  - [230, 200, 255, 255]  # Light purple
-  - [255, 200, 220, 255]  # Light pink
+  - [70, 70, 50, 255]     # Dark olive
+  - [50, 70, 50, 255]     # Dark green
+  - [50, 60, 80, 255]     # Dark blue
+  - [80, 60, 50, 255]     # Dark brown
+  - [65, 50, 75, 255]     # Dark purple
+  - [75, 50, 60, 255]     # Dark rose
 
-canvas_background: [50, 50, 50, 255]  # Dark gray
+text_color: [240, 240, 240, 255]  # Light gray text
+canvas_background: [30, 30, 30, 255]  # Dark gray
 
 default_width: 180
 default_height: 120

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem, QStyle, QStyleOptionGraphicsItem
 
 MIN_WIDTH = 100
 MIN_HEIGHT = 60
@@ -31,6 +31,7 @@ class NoteItem(QGraphicsRectItem):
         text: str,
         order: int,
         color: tuple[int, int, int, int],
+        text_color: tuple[int, int, int, int],
     ):
         super().__init__(0, 0, width, height)
         self.setPos(x, y)
@@ -39,6 +40,7 @@ class NoteItem(QGraphicsRectItem):
         self.text = text
         self.order = order
         self.color = color
+        self.text_color = text_color
 
         self.signals = NoteSignals()
 
@@ -79,7 +81,8 @@ class NoteItem(QGraphicsRectItem):
         self.text = text
         self.update()
 
-    def paint(self, painter: QPainter, option, widget=None) -> None:
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget=None) -> None:
+        option.state &= ~QStyle.StateFlag.State_Selected
         super().paint(painter, option, widget)
 
         rect = self.rect()
@@ -89,26 +92,47 @@ class NoteItem(QGraphicsRectItem):
 
             font = QFont("Sans", 10)
             painter.setFont(font)
-            painter.setPen(QPen(QColor(30, 30, 30)))
+            r, g, b, a = self.text_color
+            painter.setPen(QPen(QColor(r, g, b, a)))
 
             metrics = QFontMetrics(font)
-            elided_lines = []
-            lines = self.text.split("\n")
+            available_width = int(text_rect.width())
             available_height = text_rect.height()
             line_height = metrics.lineSpacing()
             max_lines = max(1, int(available_height / line_height))
 
-            for i, line in enumerate(lines):
-                if i >= max_lines:
-                    break
-                if i == max_lines - 1 and len(lines) > max_lines:
-                    elided = metrics.elidedText(line + "...", Qt.TextElideMode.ElideRight, int(text_rect.width()))
-                else:
-                    elided = metrics.elidedText(line, Qt.TextElideMode.ElideRight, int(text_rect.width()))
-                elided_lines.append(elided)
+            wrapped_lines = []
+            for paragraph in self.text.split("\n"):
+                if not paragraph:
+                    wrapped_lines.append("")
+                    continue
+                words = paragraph.split(" ")
+                current_line = ""
+                for word in words:
+                    test_line = f"{current_line} {word}".strip() if current_line else word
+                    if metrics.horizontalAdvance(test_line) <= available_width:
+                        current_line = test_line
+                    else:
+                        if current_line:
+                            wrapped_lines.append(current_line)
+                        if metrics.horizontalAdvance(word) > available_width:
+                            current_line = metrics.elidedText(word, Qt.TextElideMode.ElideRight, available_width)
+                        else:
+                            current_line = word
+                if current_line:
+                    wrapped_lines.append(current_line)
 
             y_offset = text_rect.top()
-            for line in elided_lines:
+            for i, line in enumerate(wrapped_lines):
+                if i >= max_lines:
+                    break
+                if i == max_lines - 1 and len(wrapped_lines) > max_lines:
+                    line = (
+                        metrics.elidedText(
+                            line, Qt.TextElideMode.ElideRight, available_width - metrics.horizontalAdvance("...")
+                        )
+                        + "..."
+                    )
                 painter.drawText(
                     int(text_rect.left()),
                     int(y_offset + metrics.ascent()),
@@ -124,9 +148,8 @@ class NoteItem(QGraphicsRectItem):
             inset = SELECTION_BORDER_WIDTH / 2
             painter.drawRect(rect.adjusted(inset, inset, -inset, -inset))
 
-            for corner in ["tl", "tr", "bl", "br"]:
-                handle_rect = self._get_handle_rect(corner)
-                painter.fillRect(handle_rect, QColor(80, 80, 80))
+            handle_rect = self._get_handle_rect("br")
+            painter.fillRect(handle_rect, QColor(80, 80, 80))
 
     def _get_handle_rect(self, corner: str) -> QRectF:
         rect = self.rect()
@@ -146,9 +169,8 @@ class NoteItem(QGraphicsRectItem):
         raise ValueError(f"Unknown corner: {corner}")
 
     def _get_corner_at(self, pos) -> str | None:
-        for corner in ["tl", "tr", "bl", "br"]:
-            if self._get_handle_rect(corner).contains(pos):
-                return corner
+        if self._get_handle_rect("br").contains(pos):
+            return "br"
         return None
 
     def mousePressEvent(self, event) -> None:
@@ -168,34 +190,9 @@ class NoteItem(QGraphicsRectItem):
     def mouseMoveEvent(self, event) -> None:
         if self._resizing and self._drag_start_rect:
             delta = event.pos() - self._drag_start_pos
-            new_rect = QRectF(self._drag_start_rect)
-
-            if self._resize_corner == "br":
-                new_rect.setWidth(max(MIN_WIDTH, self._drag_start_rect.width() + delta.x()))
-                new_rect.setHeight(max(MIN_HEIGHT, self._drag_start_rect.height() + delta.y()))
-            elif self._resize_corner == "bl":
-                new_width = max(MIN_WIDTH, self._drag_start_rect.width() - delta.x())
-                if new_width > MIN_WIDTH:
-                    self.setX(self.x() + delta.x())
-                new_rect.setWidth(new_width)
-                new_rect.setHeight(max(MIN_HEIGHT, self._drag_start_rect.height() + delta.y()))
-            elif self._resize_corner == "tr":
-                new_rect.setWidth(max(MIN_WIDTH, self._drag_start_rect.width() + delta.x()))
-                new_height = max(MIN_HEIGHT, self._drag_start_rect.height() - delta.y())
-                if new_height > MIN_HEIGHT:
-                    self.setY(self.y() + delta.y())
-                new_rect.setHeight(new_height)
-            elif self._resize_corner == "tl":
-                new_width = max(MIN_WIDTH, self._drag_start_rect.width() - delta.x())
-                new_height = max(MIN_HEIGHT, self._drag_start_rect.height() - delta.y())
-                if new_width > MIN_WIDTH:
-                    self.setX(self.x() + delta.x())
-                if new_height > MIN_HEIGHT:
-                    self.setY(self.y() + delta.y())
-                new_rect.setWidth(new_width)
-                new_rect.setHeight(new_height)
-
-            self.setRect(0, 0, new_rect.width(), new_rect.height())
+            new_width = max(MIN_WIDTH, self._drag_start_rect.width() + delta.x())
+            new_height = max(MIN_HEIGHT, self._drag_start_rect.height() + delta.y())
+            self.setRect(0, 0, new_width, new_height)
             event.accept()
             return
 
@@ -247,7 +244,8 @@ class NoteItem(QGraphicsRectItem):
         self._text_item = QGraphicsTextItem(self)
         self._text_item.setPlainText(self.text)
         self._text_item.setFont(QFont("Sans", 10))
-        self._text_item.setDefaultTextColor(QColor(30, 30, 30))
+        r, g, b, a = self.text_color
+        self._text_item.setDefaultTextColor(QColor(r, g, b, a))
         self._text_item.setPos(PADDING, PADDING)
         self._text_item.setTextWidth(self.rect().width() - PADDING * 2)
         self._text_item.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
@@ -284,14 +282,8 @@ class NoteItem(QGraphicsRectItem):
         self.signals.edit_finished.emit()
 
     def hoverMoveEvent(self, event) -> None:
-        if self.isSelected():
-            corner = self._get_corner_at(event.pos())
-            if corner in ("tl", "br"):
-                self.setCursor(Qt.CursorShape.SizeFDiagCursor)
-            elif corner in ("tr", "bl"):
-                self.setCursor(Qt.CursorShape.SizeBDiagCursor)
-            else:
-                self.setCursor(Qt.CursorShape.ArrowCursor)
+        if self.isSelected() and self._get_corner_at(event.pos()) == "br":
+            self.setCursor(Qt.CursorShape.SizeFDiagCursor)
         else:
             self.setCursor(Qt.CursorShape.ArrowCursor)
         super().hoverMoveEvent(event)

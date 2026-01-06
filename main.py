@@ -84,6 +84,9 @@ class MainWindow(QMainWindow):
         edit_shortcut_e = QShortcut(QKeySequence("E"), self)
         edit_shortcut_e.activated.connect(self._edit)
 
+        esc_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        esc_shortcut.activated.connect(self._escape)
+
     def _undo(self) -> None:
         if self._canvas.is_editing():
             return
@@ -124,8 +127,17 @@ class MainWindow(QMainWindow):
     def _edit(self) -> None:
         if self._canvas.is_editing():
             return
-        if self._canvas.enter_edit_mode():
+        if not self._canvas.get_selected_note():
+            self._canvas.create_note_and_edit()
             self._show_status("Editing (Esc to finish)")
+        elif self._canvas.enter_edit_mode():
+            self._show_status("Editing (Esc to finish)")
+
+    def _escape(self) -> None:
+        if self._canvas.is_editing():
+            self._canvas.exit_edit_mode()
+        else:
+            self._canvas.deselect_all()
 
     def _quit(self) -> None:
         if self._canvas.is_editing():
