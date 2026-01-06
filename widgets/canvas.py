@@ -70,6 +70,10 @@ class PinboardCanvas(QGraphicsView):
         self.horizontalScrollBar().setValue(0)
         self.verticalScrollBar().setValue(0)
 
+    def scroll(self, dx: int, dy: int) -> None:
+        self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + dx)
+        self.verticalScrollBar().setValue(self.verticalScrollBar().value() + dy)
+
     def load_notes(self, notes: list[Note], next_id: int) -> None:
         self._scene.clear()
         self._notes.clear()
@@ -421,6 +425,23 @@ class PinboardCanvas(QGraphicsView):
 
         self._scene.clearSelection()
         self._notes[next_id].setSelected(True)
+
+    def select_prev_note(self) -> None:
+        if not self._notes:
+            return
+
+        sorted_ids = sorted(self._notes.keys())
+        current = self.get_selected_note()
+
+        if current is None:
+            prev_id = sorted_ids[-1]
+        else:
+            current_idx = sorted_ids.index(current.note_id)
+            prev_idx = (current_idx - 1) % len(sorted_ids)
+            prev_id = sorted_ids[prev_idx]
+
+        self._scene.clearSelection()
+        self._notes[prev_id].setSelected(True)
 
     def deselect_all(self) -> None:
         self._scene.clearSelection()

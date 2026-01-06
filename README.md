@@ -46,7 +46,9 @@ The YAML file will be created if it doesn't exist.
 | Change color | Right-click → "Change Color" |
 | Yank (copy) text | `Y` |
 | Paste as new note | `P` |
-| Select next note | `Tab` |
+| Select next note | `Tab` / `J` / `L` |
+| Select prev note | `Shift+Tab` / `K` / `H` |
+| Scroll | `Ctrl+H/J/K/L` or arrow keys |
 | Undo | `Ctrl+Z` or `U` |
 | Redo | `Ctrl+Shift+Z` |
 | Quit | `Q` |

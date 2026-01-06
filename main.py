@@ -14,6 +14,7 @@ from widgets.canvas import PinboardCanvas
 CONFIG_FILE = Path(__file__).parent / "config.yaml"
 SAVE_DEBOUNCE_MS = 500
 DEFAULT_STATUS_TIMEOUT_MS = 2000
+SCROLL_AMOUNT = 100
 
 
 class MainWindow(QMainWindow):
@@ -32,9 +33,6 @@ class MainWindow(QMainWindow):
 
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
-        self._show_status(
-            "I:insert right  O:insert below  E:edit  Y:yank  P:paste  X:del  Backspace:reset view  Q:quit", 0
-        )
 
         notes, next_id = load_notes(file_path)
         self._canvas.load_notes(notes, next_id)
@@ -73,6 +71,33 @@ class MainWindow(QMainWindow):
 
         tab_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Tab), self)
         tab_shortcut.activated.connect(self._select_next)
+
+        j_shortcut = QShortcut(QKeySequence("J"), self)
+        j_shortcut.activated.connect(self._select_next)
+
+        l_shortcut = QShortcut(QKeySequence("L"), self)
+        l_shortcut.activated.connect(self._select_next)
+
+        shift_tab_shortcut = QShortcut(QKeySequence("Shift+Tab"), self)
+        shift_tab_shortcut.activated.connect(self._select_prev)
+
+        k_shortcut = QShortcut(QKeySequence("K"), self)
+        k_shortcut.activated.connect(self._select_prev)
+
+        h_shortcut = QShortcut(QKeySequence("H"), self)
+        h_shortcut.activated.connect(self._select_prev)
+
+        ctrl_h_shortcut = QShortcut(QKeySequence("Ctrl+H"), self)
+        ctrl_h_shortcut.activated.connect(self._scroll_left)
+
+        ctrl_j_shortcut = QShortcut(QKeySequence("Ctrl+J"), self)
+        ctrl_j_shortcut.activated.connect(self._scroll_down)
+
+        ctrl_k_shortcut = QShortcut(QKeySequence("Ctrl+K"), self)
+        ctrl_k_shortcut.activated.connect(self._scroll_up)
+
+        ctrl_l_shortcut = QShortcut(QKeySequence("Ctrl+L"), self)
+        ctrl_l_shortcut.activated.connect(self._scroll_right)
 
         quit_shortcut = QShortcut(QKeySequence("Q"), self)
         quit_shortcut.activated.connect(self._quit)
@@ -131,6 +156,31 @@ class MainWindow(QMainWindow):
         if self._canvas.is_editing():
             return
         self._canvas.select_next_note()
+
+    def _select_prev(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.select_prev_note()
+
+    def _scroll_left(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.scroll(-SCROLL_AMOUNT, 0)
+
+    def _scroll_right(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.scroll(SCROLL_AMOUNT, 0)
+
+    def _scroll_up(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.scroll(0, -SCROLL_AMOUNT)
+
+    def _scroll_down(self) -> None:
+        if self._canvas.is_editing():
+            return
+        self._canvas.scroll(0, SCROLL_AMOUNT)
 
     def _insert_right(self) -> None:
         if self._canvas.is_editing():
