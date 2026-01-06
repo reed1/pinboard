@@ -69,6 +69,9 @@ class MainWindow(QMainWindow):
         paste_shortcut = QShortcut(QKeySequence("P"), self)
         paste_shortcut.activated.connect(self._paste)
 
+        ctrl_v_shortcut = QShortcut(QKeySequence.StandardKey.Paste, self)
+        ctrl_v_shortcut.activated.connect(self._paste)
+
         tab_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Tab), self)
         tab_shortcut.activated.connect(self._select_next)
 

@@ -45,7 +45,7 @@ The YAML file will be created if it doesn't exist.
 | Send to back | Right-click → "Send to Back" |
 | Change color | Right-click → "Change Color" |
 | Yank (copy) text | `Y` |
-| Paste as new note | `P` |
+| Paste as new note | `P` / `Ctrl+V` |
 | Select next note | `Tab` / `J` / `L` |
 | Select prev note | `Shift+Tab` / `K` / `H` |
 | Scroll | `Ctrl+H/J/K/L` or arrow keys |
