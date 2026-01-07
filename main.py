@@ -7,12 +7,14 @@ from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QKeySequence, QShortcut, QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow
 
+from api import pb
 from storage.yaml_storage import load_config, load_notes, save_notes
 from undo_manager import UndoManager
 from widgets.canvas import PinboardCanvas
 from widgets.toast import ToastManager
 
 CONFIG_FILE = Path(__file__).parent / "config.yaml"
+USER_CONFIG_FILE = Path.home() / ".config" / "pinboard" / "config.py"
 SAVE_DEBOUNCE_MS = 500
 DEFAULT_STATUS_TIMEOUT_MS = 2000
 SCROLL_AMOUNT = 100
@@ -241,6 +243,19 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
+def _load_user_config(window: MainWindow) -> None:
+    if not USER_CONFIG_FILE.exists():
+        return
+
+    pb._initialize(window, window._canvas)
+
+    namespace = {
+        "__file__": str(USER_CONFIG_FILE),
+        "pb": pb,
+    }
+    exec(compile(USER_CONFIG_FILE.read_text(), USER_CONFIG_FILE, "exec"), namespace)
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print("Error: YAML file path is required", file=sys.stderr)
@@ -251,6 +266,7 @@ def main() -> None:
 
     app = QApplication(sys.argv)
     window = MainWindow(file_path)
+    _load_user_config(window)
     window.show()
     sys.exit(app.exec())
 
