@@ -379,8 +379,19 @@ class PinboardCanvas(QGraphicsView):
         item = self.get_selected_note()
         if not item:
             return False
+        deleted_id = item.note_id
         self._delete_note(item)
+        self._select_previous_by_id(deleted_id)
         return True
+
+    def _select_previous_by_id(self, deleted_id: int) -> None:
+        if not self._notes:
+            return
+        candidates = [nid for nid in self._notes.keys() if nid < deleted_id]
+        if not candidates:
+            return
+        prev_id = max(candidates)
+        self._notes[prev_id].setSelected(True)
 
     def paste_as_new_note(self) -> bool:
         clipboard = QApplication.clipboard()
