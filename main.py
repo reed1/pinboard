@@ -192,7 +192,7 @@ class MainWindow(QMainWindow):
     def _insert_right(self) -> None:
         if self._canvas.is_editing():
             return
-        self._canvas.create_note_right_and_edit()
+        self._canvas.create_note_and_edit()
 
     def _insert_below(self) -> None:
         if self._canvas.is_editing():

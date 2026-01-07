@@ -133,6 +133,12 @@ class PinboardCanvas(QGraphicsView):
 
         return item
 
+    def _get_viewport_scene_rect(self):
+        viewport_rect = self.viewport().rect()
+        top_left = self.mapToScene(viewport_rect.topLeft())
+        bottom_right = self.mapToScene(viewport_rect.bottomRight())
+        return top_left.x(), top_left.y(), bottom_right.x(), bottom_right.y()
+
     def _calculate_position_right(self) -> tuple[float, float]:
         padding = self._config.padding
         selected = self.get_selected_note()
@@ -154,6 +160,23 @@ class PinboardCanvas(QGraphicsView):
         max_id = max(self._notes.keys())
         last_note = self._notes[max_id]
         return (last_note.pos().x(), last_note.pos().y() + last_note.rect().height() + padding)
+
+    def _calculate_position_smart(self) -> tuple[float, float]:
+        x, y = self._calculate_position_right()
+        viewport_min_x, _, viewport_max_x, _ = self._get_viewport_scene_rect()
+        if x + self._config.default_width > viewport_max_x:
+            padding = self._config.padding
+            selected = self.get_selected_note()
+            if selected:
+                new_y = selected.pos().y() + selected.rect().height() + padding
+            elif self._notes:
+                max_id = max(self._notes.keys())
+                last_note = self._notes[max_id]
+                new_y = last_note.pos().y() + last_note.rect().height() + padding
+            else:
+                new_y = padding
+            return viewport_min_x + padding, new_y
+        return x, y
 
     def _create_note_at(self, x: float, y: float) -> NoteItem:
         color = random.choice(self._config.palette)
@@ -401,7 +424,7 @@ class PinboardCanvas(QGraphicsView):
 
         color = random.choice(self._config.palette)
         order = self._get_max_order() + 1
-        x, y = self._calculate_position_right()
+        x, y = self._calculate_position_smart()
 
         note = Note(
             id=self._next_id,
@@ -457,8 +480,8 @@ class PinboardCanvas(QGraphicsView):
     def deselect_all(self) -> None:
         self._scene.clearSelection()
 
-    def create_note_right_and_edit(self) -> None:
-        x, y = self._calculate_position_right()
+    def create_note_and_edit(self) -> None:
+        x, y = self._calculate_position_smart()
         item = self._create_note_at(x, y)
         self._scene.clearSelection()
         item.setSelected(True)
