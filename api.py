@@ -51,5 +51,10 @@ class PinboardAPI:
         shortcut = QShortcut(QKeySequence(key), self._window)
         shortcut.activated.connect(callback)
 
+    def get_file_path(self) -> str:
+        if self._window is None:
+            raise RuntimeError("Pinboard API not initialized yet")
+        return str(self._window._file_path)
+
 
 pb = PinboardAPI()
