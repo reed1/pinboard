@@ -104,7 +104,8 @@ pinboard/
 │   └── yaml_storage.py  # YAML persistence
 └── widgets/
     ├── canvas.py        # Main canvas
-    └── note_item.py     # Note widget
+    ├── note_item.py     # Note widget
+    └── toast.py         # Toast notifications
 ```
 
 ## License

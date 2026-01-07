@@ -4,12 +4,13 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtWidgets import QApplication, QMainWindow, QStatusBar
+from PySide6.QtGui import QKeySequence, QShortcut, QResizeEvent
+from PySide6.QtWidgets import QApplication, QMainWindow
 
 from storage.yaml_storage import load_config, load_notes, save_notes
 from undo_manager import UndoManager
 from widgets.canvas import PinboardCanvas
+from widgets.toast import ToastManager
 
 CONFIG_FILE = Path(__file__).parent / "config.yaml"
 SAVE_DEBOUNCE_MS = 500
@@ -31,8 +32,7 @@ class MainWindow(QMainWindow):
         self._canvas = PinboardCanvas(config, self._undo_manager)
         self.setCentralWidget(self._canvas)
 
-        self._status_bar = QStatusBar()
-        self.setStatusBar(self._status_bar)
+        self._toast_manager = ToastManager(self)
 
         notes, next_id = load_notes(file_path)
         self._canvas.load_notes(notes, next_id)
@@ -44,8 +44,12 @@ class MainWindow(QMainWindow):
 
         self.resize(1024, 768)
 
-    def _show_status(self, message: str, timeout: int = DEFAULT_STATUS_TIMEOUT_MS) -> None:
-        self._status_bar.showMessage(message, timeout)
+    def _show_toast(self, message: str, timeout: int = DEFAULT_STATUS_TIMEOUT_MS) -> None:
+        self._toast_manager.show_toast(message, timeout)
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self._toast_manager.reposition()
 
     def _setup_shortcuts(self) -> None:
         undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, self)
@@ -127,33 +131,33 @@ class MainWindow(QMainWindow):
         if self._canvas.is_editing():
             return
         if self._undo_manager.undo():
-            self._show_status("Undo")
+            self._show_toast("Undo")
             self._schedule_save()
 
     def _redo(self) -> None:
         if self._canvas.is_editing():
             return
         if self._undo_manager.redo():
-            self._show_status("Redo")
+            self._show_toast("Redo")
             self._schedule_save()
 
     def _yank(self) -> None:
         if self._canvas.is_editing():
             return
         if self._canvas.yank_selected():
-            self._show_status("Yanked")
+            self._show_toast("Yanked")
 
     def _delete_selected(self) -> None:
         if self._canvas.is_editing():
             return
         if self._canvas.delete_selected():
-            self._show_status("Deleted")
+            self._show_toast("Deleted")
 
     def _paste(self) -> None:
         if self._canvas.is_editing():
             return
         if self._canvas.paste_as_new_note():
-            self._show_status("Pasted")
+            self._show_toast("Pasted")
 
     def _select_next(self) -> None:
         if self._canvas.is_editing():
@@ -189,19 +193,16 @@ class MainWindow(QMainWindow):
         if self._canvas.is_editing():
             return
         self._canvas.create_note_right_and_edit()
-        self._show_status("Editing (Esc to finish)")
 
     def _insert_below(self) -> None:
         if self._canvas.is_editing():
             return
         self._canvas.create_note_below_and_edit()
-        self._show_status("Editing (Esc to finish)")
 
     def _edit(self) -> None:
         if self._canvas.is_editing():
             return
-        if self._canvas.enter_edit_mode():
-            self._show_status("Editing (Esc to finish)")
+        self._canvas.enter_edit_mode()
 
     def _escape(self) -> None:
         if self._canvas.is_editing():
@@ -213,14 +214,14 @@ class MainWindow(QMainWindow):
         if self._canvas.is_editing():
             return
         self._canvas.reset_viewport()
-        self._show_status("Viewport reset")
+        self._show_toast("Viewport reset")
 
     def _quit(self) -> None:
         if self._canvas.is_editing():
             return
         self._save_timer.stop()
         self._save()
-        self._show_status("Saved")
+        self._show_toast("Saved")
         QApplication.quit()
 
     def _schedule_save(self) -> None:
