@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, Signal, QPointF
 from PySide6.QtGui import QAction, QColor, QPainter, QWheelEvent
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
-from models.note import Note
+from models.note import Note, utc_now
 from storage.yaml_storage import Config
 from undo_manager import (
     ChangeColorAction,
@@ -93,6 +93,9 @@ class PinboardCanvas(QGraphicsView):
                 text=item.text,
                 order=item.order,
                 color=item.color,
+                created_at=item.created_at,
+                edited_at=item.edited_at,
+                adjusted_at=item.adjusted_at,
             )
             for item in self._notes.values()
         ]
@@ -113,6 +116,9 @@ class PinboardCanvas(QGraphicsView):
             text_color=self._config.text_color,
             font_family=self._config.font_family,
             font_size=self._config.font_size,
+            created_at=note.created_at,
+            edited_at=note.edited_at,
+            adjusted_at=note.adjusted_at,
         )
         self._scene.addItem(item)
         self._notes[note.id] = item
@@ -191,6 +197,7 @@ class PinboardCanvas(QGraphicsView):
             text="",
             order=order,
             color=color,
+            created_at=utc_now(),
         )
         self._next_id += 1
         item = self._add_note_item(note, record_undo=True)
@@ -212,6 +219,9 @@ class PinboardCanvas(QGraphicsView):
             text=item.text,
             order=item.order,
             color=item.color,
+            created_at=item.created_at,
+            edited_at=item.edited_at,
+            adjusted_at=item.adjusted_at,
         )
 
         action = DeleteNoteAction(
@@ -435,6 +445,7 @@ class PinboardCanvas(QGraphicsView):
             text=text,
             order=order,
             color=color,
+            created_at=utc_now(),
         )
         self._next_id += 1
         item = self._add_note_item(note, record_undo=True)

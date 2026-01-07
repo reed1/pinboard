@@ -4,6 +4,8 @@ from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem, QStyle, QStyleOptionGraphicsItem
 
+from models.note import utc_now
+
 MIN_WIDTH = 100
 MIN_HEIGHT = 60
 HANDLE_SIZE = 10
@@ -47,6 +49,9 @@ class NoteItem(QGraphicsRectItem):
         text_color: tuple[int, int, int, int],
         font_family: str,
         font_size: int,
+        created_at: str | None = None,
+        edited_at: str | None = None,
+        adjusted_at: str | None = None,
     ):
         super().__init__(0, 0, width, height)
         self.setPos(x, y)
@@ -58,6 +63,9 @@ class NoteItem(QGraphicsRectItem):
         self.text_color = text_color
         self.font_family = font_family
         self.font_size = font_size
+        self.created_at = created_at
+        self.edited_at = edited_at
+        self.adjusted_at = adjusted_at
 
         self.signals = NoteSignals()
 
@@ -86,11 +94,15 @@ class NoteItem(QGraphicsRectItem):
         self.setPen(QPen(QColor(100, 100, 100), 1))
 
     def set_color(self, color: tuple[int, int, int, int]) -> None:
+        if self.color != color:
+            self.adjusted_at = utc_now()
         self.color = color
         self._update_appearance()
         self.update()
 
     def set_order(self, order: int) -> None:
+        if self.order != order:
+            self.adjusted_at = utc_now()
         self.order = order
         self.setZValue(order)
 
@@ -222,6 +234,7 @@ class NoteItem(QGraphicsRectItem):
             new_w = self.rect().width()
             new_h = self.rect().height()
             if old_w != new_w or old_h != new_h:
+                self.adjusted_at = utc_now()
                 self.signals.resized.emit(self.note_id, old_w, old_h, new_w, new_h)
                 self.signals.changed.emit()
             self._resizing = False
@@ -235,6 +248,7 @@ class NoteItem(QGraphicsRectItem):
             old_pos = self._move_start_pos
             new_pos = self.pos()
             if old_pos != new_pos:
+                self.adjusted_at = utc_now()
                 self.signals.moved.emit(self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y())
                 self.signals.changed.emit()
             self._move_start_pos = None
@@ -292,6 +306,7 @@ class NoteItem(QGraphicsRectItem):
 
         if new_text != self._edit_start_text:
             self.text = new_text
+            self.edited_at = utc_now()
             self.signals.text_changed.emit(self.note_id, self._edit_start_text, new_text)
             self.signals.changed.emit()
 

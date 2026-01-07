@@ -88,8 +88,13 @@ notes:
     text: "My first note"
     order: 1
     color: [255, 255, 200, 255]
+    created_at: "2024-01-15T10:30:00Z"
+    edited_at: "2024-01-15T11:45:00Z"
+    adjusted_at: "2024-01-15T12:00:00Z"
 next_id: 2
 ```
+
+Timestamps use ISO 8601 UTC format. `created_at` is set when a note is created. `edited_at` is updated when text content changes. `adjusted_at` is updated when position, size, z-order, or color changes.
 
 ## Project Structure
 
