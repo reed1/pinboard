@@ -74,13 +74,19 @@ class PinboardCanvas(QGraphicsView):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + dx)
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() + dy)
 
-    def load_notes(self, notes: list[Note], next_id: int) -> None:
+    def load_notes(self, notes: list[Note]) -> None:
         self._scene.clear()
         self._notes.clear()
-        self._next_id = next_id
 
         for note in sorted(notes, key=lambda n: n.order):
             self._add_note_item(note, record_undo=False)
+
+        if self._notes:
+            max_id = max(self._notes.keys())
+            self._next_id = max_id + 1
+            self._notes[max_id].setSelected(True)
+        else:
+            self._next_id = 1
 
     def get_notes(self) -> list[Note]:
         return [
@@ -99,9 +105,6 @@ class PinboardCanvas(QGraphicsView):
             )
             for item in self._notes.values()
         ]
-
-    def get_next_id(self) -> int:
-        return self._next_id
 
     def _add_note_item(self, note: Note, record_undo: bool = True) -> NoteItem:
         item = NoteItem(

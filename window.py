@@ -36,8 +36,8 @@ class MainWindow(QMainWindow):
 
         self._toast_manager = ToastManager(self)
 
-        notes, next_id = load_notes(file_path)
-        self._canvas.load_notes(notes, next_id)
+        notes = load_notes(file_path)
+        self._canvas.load_notes(notes)
 
         self._canvas.notes_changed.connect(self._schedule_save)
 
@@ -155,8 +155,7 @@ class MainWindow(QMainWindow):
 
     def _save(self) -> None:
         notes = self._canvas.get_notes()
-        next_id = self._canvas.get_next_id()
-        save_notes(self._file_path, notes, next_id)
+        save_notes(self._file_path, notes)
 
     def _update_title(self) -> None:
         self.setWindowTitle(f"Pinboard - {self._file_path.name}")

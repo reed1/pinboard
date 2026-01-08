@@ -20,26 +20,21 @@ class Config:
     padding: int
 
 
-def load_notes(filepath: Path) -> tuple[list[Note], int]:
+def load_notes(filepath: Path) -> list[Note]:
     if not filepath.exists():
-        return [], 1
+        return []
 
     with open(filepath, "r") as f:
         data = yaml.safe_load(f)
 
     if not data:
-        return [], 1
+        return []
 
-    notes = [Note.from_dict(n) for n in data.get("notes", [])]
-    next_id = data.get("next_id", 1)
-    return notes, next_id
+    return [Note.from_dict(n) for n in data.get("notes", [])]
 
 
-def save_notes(filepath: Path, notes: list[Note], next_id: int) -> None:
-    data = {
-        "notes": [n.to_dict() for n in notes],
-        "next_id": next_id,
-    }
+def save_notes(filepath: Path, notes: list[Note]) -> None:
+    data = {"notes": [n.to_dict() for n in notes]}
     with open(filepath, "w") as f:
         yaml.dump(data, f, default_flow_style=None, sort_keys=False)
 
