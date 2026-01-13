@@ -11,6 +11,7 @@ from keybindings import setup_keybindings
 from storage.yaml_storage import load_config, load_notes, save_notes
 from undo_manager import UndoManager
 from widgets.canvas import PinboardCanvas
+from widgets.minimap import MinimapWidget
 from widgets.toast import ToastManager
 
 CONFIG_FILE = Path(__file__).parent / "config.yaml"
@@ -35,16 +36,21 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self._canvas)
 
         self._toast_manager = ToastManager(self)
+        self._minimap = MinimapWidget(self._canvas, self)
 
         notes = load_notes(file_path)
         self._canvas.load_notes(notes)
 
         self._canvas.notes_changed.connect(self._schedule_save)
+        self._canvas.notes_changed.connect(self._minimap.update)
+        self._canvas.viewport_changed.connect(self._minimap.update)
 
         setup_keybindings(self)
         self._update_title()
 
         self.resize(1024, 768)
+        self._minimap.show()
+        self._minimap.reposition()
 
     def _show_toast(self, message: str, timeout: int = DEFAULT_STATUS_TIMEOUT_MS) -> None:
         self._toast_manager.show_toast(message, timeout)
@@ -52,6 +58,7 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self._toast_manager.reposition()
+        self._minimap.reposition()
 
     def undo(self) -> None:
         if self._canvas.is_editing():

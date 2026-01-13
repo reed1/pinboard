@@ -24,6 +24,7 @@ from widgets.note_item import NoteItem
 
 class PinboardCanvas(QGraphicsView):
     notes_changed = Signal()
+    viewport_changed = Signal()
 
     def __init__(
         self,
@@ -69,10 +70,12 @@ class PinboardCanvas(QGraphicsView):
         self.resetTransform()
         self.horizontalScrollBar().setValue(0)
         self.verticalScrollBar().setValue(0)
+        self.viewport_changed.emit()
 
     def scroll(self, dx: int, dy: int) -> None:
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + dx)
         self.verticalScrollBar().setValue(self.verticalScrollBar().value() + dy)
+        self.viewport_changed.emit()
 
     def load_notes(self, notes: list[Note]) -> None:
         self._scene.clear()
@@ -545,6 +548,7 @@ class PinboardCanvas(QGraphicsView):
             self.scale(zoom_factor, zoom_factor)
         else:
             self.scale(1 / zoom_factor, 1 / zoom_factor)
+        self.viewport_changed.emit()
 
     def mousePressEvent(self, event) -> None:
         self.setFocus()
@@ -577,6 +581,7 @@ class PinboardCanvas(QGraphicsView):
             self._pan_start = event.position()
             self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - int(delta.x()))
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - int(delta.y()))
+            self.viewport_changed.emit()
             event.accept()
             return
         super().mouseMoveEvent(event)
