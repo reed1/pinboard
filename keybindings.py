@@ -52,6 +52,9 @@ def setup_keybindings(window: MainWindow) -> None:
     h_shortcut = QShortcut(QKeySequence("H"), window)
     h_shortcut.activated.connect(window.select_prev)
 
+    shift_h_shortcut = QShortcut(QKeySequence("Shift+H"), window)
+    shift_h_shortcut.activated.connect(window.show_text_overlay)
+
     ctrl_h_shortcut = QShortcut(QKeySequence("Ctrl+H"), window)
     ctrl_h_shortcut.activated.connect(window.scroll_left)
 

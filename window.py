@@ -12,6 +12,7 @@ from storage.yaml_storage import load_config, load_notes, save_notes
 from undo_manager import UndoManager
 from widgets.canvas import PinboardCanvas
 from widgets.minimap import MinimapWidget
+from widgets.text_overlay import TextOverlayWidget
 from widgets.toast import ToastManager
 
 CONFIG_FILE = Path(__file__).parent / "config.yaml"
@@ -37,6 +38,7 @@ class MainWindow(QMainWindow):
 
         self._toast_manager = ToastManager(self)
         self._minimap = MinimapWidget(self._canvas, self)
+        self._text_overlay: TextOverlayWidget | None = None
 
         notes = load_notes(file_path)
         self._canvas.load_notes(notes)
@@ -59,6 +61,8 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self._toast_manager.reposition()
         self._minimap.reposition()
+        if self._text_overlay:
+            self._text_overlay.reposition()
 
     def undo(self) -> None:
         if self._canvas.is_editing():
@@ -138,6 +142,8 @@ class MainWindow(QMainWindow):
         self._canvas.enter_edit_mode()
 
     def escape(self) -> None:
+        if self._close_text_overlay():
+            return
         if self._canvas.is_editing():
             self._canvas.exit_edit_mode()
         else:
@@ -149,7 +155,28 @@ class MainWindow(QMainWindow):
         self._canvas.reset_viewport()
         self._show_toast("Viewport reset")
 
+    def show_text_overlay(self) -> None:
+        if self._canvas.is_editing():
+            return
+        if self._text_overlay:
+            return
+        selected = self._canvas.get_selected_note()
+        if not selected:
+            return
+        self._text_overlay = TextOverlayWidget(selected.text, self)
+        self._text_overlay.show()
+        self._text_overlay.reposition()
+
+    def _close_text_overlay(self) -> bool:
+        if not self._text_overlay:
+            return False
+        self._text_overlay.deleteLater()
+        self._text_overlay = None
+        return True
+
     def quit(self) -> None:
+        if self._close_text_overlay():
+            return
         if self._canvas.is_editing():
             return
         self._save_timer.stop()
