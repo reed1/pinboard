@@ -1,26 +1,31 @@
 from __future__ import annotations
 
-import sys
+import argparse
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication
-
-from window import MainWindow, load_user_config
+from commands import open as cmd_open
+from commands import push as cmd_push
 
 
 def main() -> None:
-    if len(sys.argv) < 2:
-        print("Error: YAML file path is required", file=sys.stderr)
-        print("Usage: pinboard <path/to/notes.yaml>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(prog="pinboard", description="Sticky notes application")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    file_path = Path(sys.argv[1])
+    open_parser = subparsers.add_parser("open", help="Open a pinboard file in the GUI")
+    open_parser.add_argument("file", type=Path, help="Path to the YAML file")
 
-    app = QApplication(sys.argv)
-    window = MainWindow(file_path)
-    load_user_config(window)
-    window.show()
-    sys.exit(app.exec())
+    push_parser = subparsers.add_parser("push", help="Add a new note via CLI")
+    push_parser.add_argument("file", type=Path, help="Path to the YAML file")
+    push_parser.add_argument("text", help="Text content for the new note")
+
+    args = parser.parse_args()
+
+    if args.command == "open":
+        cmd_open.run(args)
+    elif args.command == "push":
+        cmd_push.run(args)
+    else:
+        raise ValueError(f"Unknown command: {args.command}")
 
 
 if __name__ == "__main__":
