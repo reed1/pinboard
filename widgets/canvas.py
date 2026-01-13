@@ -420,17 +420,8 @@ class PinboardCanvas(QGraphicsView):
             return False
         deleted_id = item.note_id
         self._delete_note(item)
-        self._select_previous_by_id(deleted_id)
+        self.select_prev_note(from_id=deleted_id)
         return True
-
-    def _select_previous_by_id(self, deleted_id: int) -> None:
-        if not self._notes:
-            return
-        candidates = [nid for nid in self._notes.keys() if nid < deleted_id]
-        if not candidates:
-            return
-        prev_id = max(candidates)
-        self._notes[prev_id].setSelected(True)
 
     def paste_as_new_note(self) -> bool:
         clipboard = QApplication.clipboard()
@@ -477,18 +468,28 @@ class PinboardCanvas(QGraphicsView):
         self._scene.clearSelection()
         self._notes[next_id].setSelected(True)
 
-    def select_prev_note(self) -> None:
+    def select_prev_note(self, from_id: int | None = None) -> None:
         if not self._notes:
             return
 
         sorted_ids = sorted(self._notes.keys())
-        current = self.get_selected_note()
 
-        if current is None:
+        if from_id is not None:
+            current_id = from_id
+        else:
+            current = self.get_selected_note()
+            current_id = current.note_id if current else None
+
+        if current_id is None:
             prev_id = sorted_ids[-1]
         else:
-            current_idx = sorted_ids.index(current.note_id)
-            prev_idx = (current_idx - 1) % len(sorted_ids)
+            pos = 0
+            for i, nid in enumerate(sorted_ids):
+                if nid >= current_id:
+                    pos = i
+                    break
+                pos = i + 1
+            prev_idx = (pos - 1) % len(sorted_ids)
             prev_id = sorted_ids[prev_idx]
 
         self._scene.clearSelection()
