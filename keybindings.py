@@ -22,11 +22,11 @@ def setup_keybindings(window: MainWindow) -> None:
     yank_shortcut = QShortcut(QKeySequence("Y"), window)
     yank_shortcut.activated.connect(window.yank)
 
-    delete_shortcut = QShortcut(QKeySequence("X"), window)
-    delete_shortcut.activated.connect(window.delete_selected)
+    cut_shortcut = QShortcut(QKeySequence("X"), window)
+    cut_shortcut.activated.connect(window.cut_selected)
 
-    delete_shortcut2 = QShortcut(QKeySequence(Qt.Key.Key_Delete), window)
-    delete_shortcut2.activated.connect(window.delete_selected)
+    delete_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Delete), window)
+    delete_shortcut.activated.connect(window.delete_selected)
 
     paste_shortcut = QShortcut(QKeySequence("P"), window)
     paste_shortcut.activated.connect(window.paste)

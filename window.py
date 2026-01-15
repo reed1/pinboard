@@ -84,6 +84,12 @@ class MainWindow(QMainWindow):
         if self._canvas.yank_selected():
             self._show_toast("Yanked")
 
+    def cut_selected(self) -> None:
+        if self._canvas.is_editing():
+            return
+        if self._canvas.cut_selected():
+            self._show_toast("Cut")
+
     def delete_selected(self) -> None:
         if self._canvas.is_editing():
             return

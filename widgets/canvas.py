@@ -414,6 +414,17 @@ class PinboardCanvas(QGraphicsView):
         clipboard.setText(item.text)
         return True
 
+    def cut_selected(self) -> bool:
+        item = self.get_selected_note()
+        if not item:
+            return False
+        clipboard = QApplication.clipboard()
+        clipboard.setText(item.text)
+        deleted_id = item.note_id
+        self._delete_note(item)
+        self.select_prev_note(from_id=deleted_id)
+        return True
+
     def delete_selected(self) -> bool:
         item = self.get_selected_note()
         if not item:
