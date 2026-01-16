@@ -103,9 +103,9 @@ Timestamps use ISO 8601 UTC format. `created_at` is set when a note is created. 
 
 ```
 pinboard/
-├── main.py                  # Entry point
 └── src/pinboard/            # Package (importable as `pinboard`)
     ├── __init__.py          # Exports PinboardAPI, pb
+    ├── cli.py               # Entry point
     ├── api.py               # Scripting API
     ├── window.py            # Main window
     ├── keybindings.py       # Default keybindings
