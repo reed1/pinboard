@@ -15,8 +15,9 @@ from widgets.minimap import MinimapWidget
 from widgets.text_overlay import TextOverlayWidget
 from widgets.toast import ToastManager
 
-CONFIG_FILE = Path(__file__).parent / "config.yaml"
-USER_CONFIG_FILE = Path.home() / ".config" / "pinboard" / "config.py"
+USER_CONFIG_DIR = Path.home() / ".config" / "pinboard"
+USER_CONFIG_YAML = USER_CONFIG_DIR / "config.yaml"
+USER_CONFIG_PY = USER_CONFIG_DIR / "config.py"
 SAVE_DEBOUNCE_MS = 500
 DEFAULT_STATUS_TIMEOUT_MS = 2000
 SCROLL_AMOUNT = 100
@@ -32,7 +33,7 @@ class MainWindow(QMainWindow):
         self._save_timer.setSingleShot(True)
         self._save_timer.timeout.connect(self._save)
 
-        config = load_config(CONFIG_FILE)
+        config = load_config(USER_CONFIG_YAML)
         self._canvas = PinboardCanvas(config, self._undo_manager)
         self.setCentralWidget(self._canvas)
 
@@ -207,13 +208,13 @@ class MainWindow(QMainWindow):
 
 
 def load_user_config(window: MainWindow) -> None:
-    if not USER_CONFIG_FILE.exists():
+    if not USER_CONFIG_PY.exists():
         return
 
     pb._initialize(window, window._canvas)
 
     namespace = {
-        "__file__": str(USER_CONFIG_FILE),
+        "__file__": str(USER_CONFIG_PY),
         "pb": pb,
     }
-    exec(compile(USER_CONFIG_FILE.read_text(), USER_CONFIG_FILE, "exec"), namespace)
+    exec(compile(USER_CONFIG_PY.read_text(), USER_CONFIG_PY, "exec"), namespace)

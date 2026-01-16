@@ -20,6 +20,25 @@ class Config:
     padding: int
 
 
+DEFAULT_CONFIG = {
+    "palette": [
+        (255, 230, 180, 255),  # Pastel yellow
+        (180, 230, 180, 255),  # Pastel green
+        (180, 210, 255, 255),  # Pastel blue
+        (255, 200, 180, 255),  # Pastel peach
+        (220, 190, 255, 255),  # Pastel purple
+        (255, 200, 220, 255),  # Pastel pink
+    ],
+    "text_color": (40, 40, 40, 255),
+    "canvas_background": (40, 40, 40, 255),
+    "font_family": "Roboto",
+    "font_size": 16,
+    "default_width": 240,
+    "default_height": 160,
+    "padding": 20,
+}
+
+
 def load_notes(filepath: Path) -> list[Note]:
     if not filepath.exists():
         return []
@@ -39,39 +58,22 @@ def save_notes(filepath: Path, notes: list[Note]) -> None:
         yaml.dump(data, f, default_flow_style=None, sort_keys=False)
 
 
-def load_config(filepath: Path) -> Config:
-    if not filepath.exists():
-        raise FileNotFoundError(f"Config file not found: {filepath}")
+def load_config(user_config_path: Path | None = None) -> Config:
+    data = dict(DEFAULT_CONFIG)
 
-    with open(filepath, "r") as f:
-        data = yaml.safe_load(f)
-
-    if not data:
-        raise ValueError(f"Config file is empty: {filepath}")
-
-    if "palette" not in data:
-        raise ValueError("Config must contain 'palette'")
-    if "text_color" not in data:
-        raise ValueError("Config must contain 'text_color'")
-    if "canvas_background" not in data:
-        raise ValueError("Config must contain 'canvas_background'")
-
-    palette = [tuple(c) for c in data["palette"]]
-    text_color = tuple(data["text_color"])
-    canvas_background = tuple(data["canvas_background"])
-    font_family = data.get("font_family", "Sans")
-    font_size = data.get("font_size", 10)
-    default_width = data.get("default_width", 180)
-    default_height = data.get("default_height", 120)
-    padding = data.get("padding", 20)
+    if user_config_path and user_config_path.exists():
+        with open(user_config_path, "r") as f:
+            user_data = yaml.safe_load(f)
+        if user_data:
+            data.update(user_data)
 
     return Config(
-        palette=palette,
-        text_color=text_color,
-        canvas_background=canvas_background,
-        font_family=font_family,
-        font_size=font_size,
-        default_width=default_width,
-        default_height=default_height,
-        padding=padding,
+        palette=[tuple(c) for c in data["palette"]],
+        text_color=tuple(data["text_color"]),
+        canvas_background=tuple(data["canvas_background"]),
+        font_family=data["font_family"],
+        font_size=data["font_size"],
+        default_width=data["default_width"],
+        default_height=data["default_height"],
+        padding=data["padding"],
     )

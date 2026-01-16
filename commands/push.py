@@ -9,8 +9,8 @@ from storage.yaml_storage import load_config, load_notes, save_notes
 
 
 def run(args: argparse.Namespace) -> None:
-    config_path = Path(__file__).parent.parent / "config.yaml"
-    config = load_config(config_path)
+    user_config_path = Path.home() / ".config" / "pinboard" / "config.yaml"
+    config = load_config(user_config_path)
 
     notes = load_notes(args.file)
 
