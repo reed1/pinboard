@@ -55,23 +55,26 @@ The YAML file will be created if it doesn't exist.
 
 ## Configuration
 
-Edit `config.yaml` to customize:
+Create `~/.config/pinboard/config.yaml` to override defaults (only specify what you want to change):
 
 ```yaml
-palette:
-  - [255, 255, 200, 255]  # Light yellow (RGBA)
-  - [200, 255, 200, 255]  # Light green
-  - [200, 230, 255, 255]  # Light blue
-  - [255, 220, 200, 255]  # Light peach
-  - [230, 200, 255, 255]  # Light purple
-  - [255, 200, 220, 255]  # Light pink
-
 font_family: Roboto
-font_size: 12
+font_size: 20
+palette:
+  - [255, 230, 180, 255]  # Pastel yellow (RGBA)
+  - [180, 230, 180, 255]  # Pastel green
+```
 
-default_width: 180
-default_height: 120
-padding: 20
+Available options: `palette`, `text_color`, `canvas_background`, `font_family`, `font_size`, `default_width`, `default_height`, `padding`
+
+For custom keybindings and scripting, create `~/.config/pinboard/config.py`:
+
+```python
+from pinboard import PinboardAPI
+
+pb: PinboardAPI
+
+pb.add_keybinding("Ctrl+Shift+N", lambda: pb.toast("Hello!"))
 ```
 
 ## Data Format
@@ -100,17 +103,24 @@ Timestamps use ISO 8601 UTC format. `created_at` is set when a note is created. 
 
 ```
 pinboard/
-├── main.py              # Entry point
-├── config.yaml          # Application configuration
-├── undo_manager.py      # Undo/redo stack
-├── models/
-│   └── note.py          # Note dataclass
-├── storage/
-│   └── yaml_storage.py  # YAML persistence
-└── widgets/
-    ├── canvas.py        # Main canvas
-    ├── note_item.py     # Note widget
-    └── toast.py         # Toast notifications
+├── main.py                  # Entry point
+└── src/pinboard/            # Package (importable as `pinboard`)
+    ├── __init__.py          # Exports PinboardAPI, pb
+    ├── api.py               # Scripting API
+    ├── window.py            # Main window
+    ├── keybindings.py       # Default keybindings
+    ├── undo_manager.py      # Undo/redo stack
+    ├── models/
+    │   └── note.py          # Note dataclass
+    ├── storage/
+    │   └── yaml_storage.py  # YAML persistence, embedded defaults
+    ├── widgets/
+    │   ├── canvas.py        # Main canvas
+    │   ├── note_item.py     # Note widget
+    │   └── toast.py         # Toast notifications
+    └── commands/
+        ├── open.py          # GUI open command
+        └── push.py          # CLI push command
 ```
 
 ## License
