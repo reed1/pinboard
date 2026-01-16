@@ -5,6 +5,7 @@ from typing import Callable
 
 from PySide6.QtCore import Qt, Signal, QPointF
 from PySide6.QtGui import QAction, QColor, QPainter, QWheelEvent
+from PySide6.QtGui import QClipboard
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
 from models.note import Note, utc_now
@@ -462,6 +463,34 @@ class PinboardCanvas(QGraphicsView):
         self.notes_changed.emit()
         return True
 
+    def paste_from_selection(self) -> bool:
+        clipboard = QApplication.clipboard()
+        text = clipboard.text(QClipboard.Mode.Selection)
+        if not text:
+            return False
+
+        color = random.choice(self._config.palette)
+        order = self._get_max_order() + 1
+        x, y = self._calculate_position_smart()
+
+        note = Note(
+            id=self._next_id,
+            x=x,
+            y=y,
+            width=self._config.default_width,
+            height=self._config.default_height,
+            text=text,
+            order=order,
+            color=color,
+            created_at=utc_now(),
+        )
+        self._next_id += 1
+        item = self._add_note_item(note, record_undo=True)
+        self._scene.clearSelection()
+        item.setSelected(True)
+        self.notes_changed.emit()
+        return True
+
     def select_next_note(self) -> None:
         if not self._notes:
             return
@@ -584,6 +613,10 @@ class PinboardCanvas(QGraphicsView):
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
                 event.accept()
                 return
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            self.paste_from_selection()
+            event.accept()
+            return
 
         super().mousePressEvent(event)
 
