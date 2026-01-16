@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: pinboard
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.9
+Requires-Dist: pyside6>=6.10.1
+Requires-Dist: pyyaml>=6.0.3

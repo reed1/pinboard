@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from models.note import Note
+from pinboard.models.note import Note
 
 
 @dataclass

@@ -7,7 +7,7 @@ import sys
 def run(args: argparse.Namespace) -> None:
     from PySide6.QtWidgets import QApplication
 
-    from window import MainWindow, load_user_config
+    from pinboard.window import MainWindow, load_user_config
 
     app = QApplication(sys.argv)
     window = MainWindow(args.file)

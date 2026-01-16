@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QShortcut
 
 if TYPE_CHECKING:
-    from window import MainWindow
+    from pinboard.window import MainWindow
 
 
 def setup_keybindings(window: MainWindow) -> None:

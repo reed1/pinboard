@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Callable
 from PySide6.QtGui import QKeySequence, QShortcut
 
 if TYPE_CHECKING:
-    from widgets.canvas import PinboardCanvas
-    from main import MainWindow
+    from pinboard.widgets.canvas import PinboardCanvas
+    from pinboard.window import MainWindow
 
 DEFAULT_TOAST_TIMEOUT_MS = 2000
 

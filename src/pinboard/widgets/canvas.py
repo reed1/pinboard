@@ -8,9 +8,9 @@ from PySide6.QtGui import QAction, QColor, QPainter, QWheelEvent
 from PySide6.QtGui import QClipboard
 from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 
-from models.note import Note, utc_now
-from storage.yaml_storage import Config
-from undo_manager import (
+from pinboard.models.note import Note, utc_now
+from pinboard.storage.yaml_storage import Config
+from pinboard.undo_manager import (
     ChangeColorAction,
     ChangeOrderAction,
     CreateNoteAction,
@@ -20,7 +20,7 @@ from undo_manager import (
     ResizeNoteAction,
     UndoManager,
 )
-from widgets.note_item import NoteItem
+from pinboard.widgets.note_item import NoteItem
 
 
 class PinboardCanvas(QGraphicsView):

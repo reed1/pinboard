@@ -6,14 +6,14 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow
 
-from api import pb
-from keybindings import setup_keybindings
-from storage.yaml_storage import load_config, load_notes, save_notes
-from undo_manager import UndoManager
-from widgets.canvas import PinboardCanvas
-from widgets.minimap import MinimapWidget
-from widgets.text_overlay import TextOverlayWidget
-from widgets.toast import ToastManager
+from pinboard.api import pb
+from pinboard.keybindings import setup_keybindings
+from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
+from pinboard.undo_manager import UndoManager
+from pinboard.widgets.canvas import PinboardCanvas
+from pinboard.widgets.minimap import MinimapWidget
+from pinboard.widgets.text_overlay import TextOverlayWidget
+from pinboard.widgets.toast import ToastManager
 
 USER_CONFIG_DIR = Path.home() / ".config" / "pinboard"
 USER_CONFIG_YAML = USER_CONFIG_DIR / "config.yaml"

@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from commands import open as cmd_open
-from commands import push as cmd_push
+from pinboard.commands import open as cmd_open
+from pinboard.commands import push as cmd_push
 
 
 def main() -> None:

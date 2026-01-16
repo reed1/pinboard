@@ -4,7 +4,7 @@ from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem, QStyle, QStyleOptionGraphicsItem
 
-from models.note import utc_now
+from pinboard.models.note import utc_now
 
 MIN_WIDTH = 100
 MIN_HEIGHT = 60

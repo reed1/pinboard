@@ -4,8 +4,8 @@ import argparse
 import random
 from pathlib import Path
 
-from models.note import Note, utc_now
-from storage.yaml_storage import load_config, load_notes, save_notes
+from pinboard.models.note import Note, utc_now
+from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
 
 
 def run(args: argparse.Namespace) -> None:
