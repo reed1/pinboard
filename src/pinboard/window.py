@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QFileSystemWatcher, QTimer
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow
 
@@ -32,6 +32,10 @@ class MainWindow(QMainWindow):
         self._save_timer = QTimer()
         self._save_timer.setSingleShot(True)
         self._save_timer.timeout.connect(self._save)
+
+        self._ignore_next_change = False
+        self._file_watcher = QFileSystemWatcher([str(file_path)])
+        self._file_watcher.fileChanged.connect(self._on_file_changed)
 
         config = load_config(USER_CONFIG_YAML)
         self._canvas = PinboardCanvas(config, self._undo_manager)
@@ -195,8 +199,23 @@ class MainWindow(QMainWindow):
         self._save_timer.start(SAVE_DEBOUNCE_MS)
 
     def _save(self) -> None:
+        self._ignore_next_change = True
         notes = self._canvas.get_notes()
         save_notes(self._file_path, notes)
+
+    def _on_file_changed(self, path: str) -> None:
+        self._ensure_watching(path)
+        if self._ignore_next_change:
+            self._ignore_next_change = False
+            return
+        notes = load_notes(self._file_path)
+        self._canvas.load_notes(notes)
+        self._undo_manager.clear()
+        self._show_toast("Reloaded")
+
+    def _ensure_watching(self, path: str) -> None:
+        if path not in self._file_watcher.files():
+            self._file_watcher.addPath(path)
 
     def _update_title(self) -> None:
         self.setWindowTitle(f"Pinboard - {self._file_path.name}")
