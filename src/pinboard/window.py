@@ -208,8 +208,17 @@ class MainWindow(QMainWindow):
         if self._ignore_next_change:
             self._ignore_next_change = False
             return
+        if self._canvas.is_editing():
+            self._canvas.exit_edit_mode()
+        selected = self._canvas.get_selected_note()
+        selected_id = selected.note_id if selected else None
         notes = load_notes(self._file_path)
         self._canvas.load_notes(notes)
+        if selected_id is not None and selected_id not in self._canvas._notes:
+            self._canvas.deselect_all()
+        elif selected_id is not None and selected_id in self._canvas._notes:
+            self._canvas._scene.clearSelection()
+            self._canvas._notes[selected_id].setSelected(True)
         self._undo_manager.clear()
         self._show_toast("Reloaded")
 
