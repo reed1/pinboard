@@ -110,11 +110,13 @@ class MainWindow(QMainWindow):
     def select_next(self) -> None:
         if self._canvas.is_editing():
             return
+        self._close_text_overlay()
         self._canvas.select_next_note()
 
     def select_prev(self) -> None:
         if self._canvas.is_editing():
             return
+        self._close_text_overlay()
         self._canvas.select_prev_note()
 
     def scroll_left(self) -> None:
