@@ -8,6 +8,26 @@ from PySide6.QtGui import QKeySequence, QShortcut
 if TYPE_CHECKING:
     from pinboard.window import MainWindow
 
+KEYBINDING_HELP: list[tuple[str, str]] = [
+    ("Ctrl+Z / U", "Undo"),
+    ("Ctrl+Shift+Z", "Redo"),
+    ("Y", "Yank (copy)"),
+    ("X", "Cut"),
+    ("Del", "Delete"),
+    ("P / Ctrl+V", "Paste as new note"),
+    ("Tab / J / L", "Select next note"),
+    ("Shift+Tab / K / H", "Select prev note"),
+    ("Shift+H", "Show note text"),
+    ("Ctrl+H/J/K/L", "Scroll viewport"),
+    ("I", "Insert note (right)"),
+    ("O", "Insert note (below)"),
+    ("E", "Edit note"),
+    ("Esc", "Close / Deselect"),
+    ("Backspace", "Reset viewport"),
+    ("Q", "Quit"),
+    ("?", "Show keybindings"),
+]
+
 
 def setup_keybindings(window: MainWindow) -> None:
     undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, window)
@@ -87,3 +107,6 @@ def setup_keybindings(window: MainWindow) -> None:
 
     backspace_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Backspace), window)
     backspace_shortcut.activated.connect(window.reset_viewport)
+
+    help_shortcut = QShortcut(QKeySequence("?"), window)
+    help_shortcut.activated.connect(window.show_keybindings_help)

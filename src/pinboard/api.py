@@ -16,6 +16,7 @@ class PinboardAPI:
         self._window: MainWindow | None = None
         self._canvas: PinboardCanvas | None = None
         self._pending_keybindings: list[tuple[str, Callable]] = []
+        self._keybinding_registry: list[tuple[str, str]] = []
 
     def _initialize(self, window: MainWindow, canvas: PinboardCanvas) -> None:
         self._window = window
@@ -50,6 +51,8 @@ class PinboardAPI:
     def _register_keybinding(self, key: str, callback: Callable) -> None:
         shortcut = QShortcut(QKeySequence(key), self._window)
         shortcut.activated.connect(callback)
+        name = getattr(callback, "__name__", None) or "?"
+        self._keybinding_registry.append((key, name.replace("_", " ")))
 
     def get_file_path(self) -> str:
         if self._window is None:

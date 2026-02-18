@@ -7,7 +7,7 @@ from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 from pinboard.api import pb
-from pinboard.keybindings import setup_keybindings
+from pinboard.keybindings import KEYBINDING_HELP, setup_keybindings
 from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
 from pinboard.undo_manager import UndoManager
 from pinboard.widgets.canvas import PinboardCanvas
@@ -167,6 +167,25 @@ class MainWindow(QMainWindow):
             return
         self._canvas.reset_viewport()
         self._show_toast("Viewport reset")
+
+    def show_keybindings_help(self) -> None:
+        if self._canvas.is_editing():
+            return
+        if self._text_overlay:
+            return
+        key_col_width = max(len(k) for k, _ in KEYBINDING_HELP)
+        lines = ["KEYBINDINGS", ""]
+        for key, desc in KEYBINDING_HELP:
+            lines.append(f"  {key.ljust(key_col_width)}   {desc}")
+        user_bindings = pb._keybinding_registry
+        if user_bindings:
+            key_col_width = max(key_col_width, max(len(k) for k, _ in user_bindings))
+            lines += ["", "USER KEYBINDINGS", ""]
+            for key, desc in user_bindings:
+                lines.append(f"  {key.ljust(key_col_width)}   {desc}")
+        self._text_overlay = TextOverlayWidget("\n".join(lines), self)
+        self._text_overlay.show()
+        self._text_overlay.reposition()
 
     def show_text_overlay(self) -> None:
         if self._canvas.is_editing():
