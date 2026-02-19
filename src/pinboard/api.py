@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
+from PySide6.QtCore import QTimer
 from PySide6.QtGui import QKeySequence, QShortcut
 
 if TYPE_CHECKING:
@@ -53,6 +54,9 @@ class PinboardAPI:
         shortcut.activated.connect(callback)
         name = getattr(callback, "__name__", None) or "?"
         self._keybinding_registry.append((key, name.replace("_", " ")))
+
+    def call_later(self, callback: Callable, delay_ms: int = 0) -> None:
+        QTimer.singleShot(delay_ms, callback)
 
     def get_file_path(self) -> str:
         if self._window is None:
