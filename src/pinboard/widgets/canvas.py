@@ -426,6 +426,14 @@ class PinboardCanvas(QGraphicsView):
         self.select_prev_note(from_id=deleted_id)
         return True
 
+    def delete_note(self, note_id: int) -> bool:
+        item = self._notes.get(note_id)
+        if not item:
+            return False
+        self._delete_note(item)
+        self.select_prev_note(from_id=note_id)
+        return True
+
     def delete_selected(self) -> bool:
         item = self.get_selected_note()
         if not item:
