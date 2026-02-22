@@ -25,6 +25,12 @@ class NoteSignals(QObject):
 class EditableTextItem(QGraphicsTextItem):
     enter_pressed = Signal()
 
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget=None) -> None:
+        bg = self.data(0)
+        if bg:
+            painter.fillRect(self.boundingRect(), bg)
+        super().paint(painter, option, widget)
+
     def keyPressEvent(self, event) -> None:
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
@@ -273,6 +279,8 @@ class NoteItem(QGraphicsRectItem):
         self._edit_start_text = self.text
 
         self._text_item = EditableTextItem(self)
+        r, g, b, a = self.color
+        self._text_item.setData(0, QColor(r, g, b, a))
         self._text_item.setPlainText(self.text)
         self._text_item.setFont(QFont(self.font_family, self.font_size))
         r, g, b, a = self.text_color
