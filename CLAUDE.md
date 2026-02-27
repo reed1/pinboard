@@ -40,7 +40,7 @@ The YAML file will be created if it doesn't exist.
 | Move note | Drag note |
 | Resize note | Click to select, drag corners |
 | Edit text | Double-click, or `E` |
-| Delete note | Right-click → "Delete", or `X` / `Del` |
+| Delete note | Right-click → "Delete", or `D, D` / `X` / `Del` |
 | Bring to front | Right-click → "Bring to Front" |
 | Send to back | Right-click → "Send to Back" |
 | Change color | Right-click → "Change Color" |

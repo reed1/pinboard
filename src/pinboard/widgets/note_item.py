@@ -19,6 +19,7 @@ class NoteSignals(QObject):
     resized = Signal(int, float, float, float, float)  # id, old_w, old_h, new_w, new_h
     text_changed = Signal(int, str, str)  # id, old_text, new_text
     changed = Signal()
+    edit_started = Signal()
     edit_finished = Signal()
 
 
@@ -277,6 +278,7 @@ class NoteItem(QGraphicsRectItem):
 
         self._editing = True
         self._edit_start_text = self.text
+        self.signals.edit_started.emit()
 
         self._text_item = EditableTextItem(self)
         r, g, b, a = self.color

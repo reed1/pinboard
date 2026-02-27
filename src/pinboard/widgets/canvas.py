@@ -26,6 +26,8 @@ from pinboard.widgets.note_item import NoteItem
 class PinboardCanvas(QGraphicsView):
     notes_changed = Signal()
     viewport_changed = Signal()
+    editing_started = Signal()
+    editing_stopped = Signal()
 
     def __init__(
         self,
@@ -134,6 +136,8 @@ class PinboardCanvas(QGraphicsView):
         item.signals.resized.connect(self._on_note_resized)
         item.signals.text_changed.connect(self._on_note_text_changed)
         item.signals.changed.connect(self.notes_changed.emit)
+        item.signals.edit_started.connect(self.editing_started.emit)
+        item.signals.edit_finished.connect(self.editing_stopped.emit)
 
         if record_undo:
             action = CreateNoteAction(

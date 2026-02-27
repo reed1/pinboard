@@ -13,6 +13,7 @@ KEYBINDING_HELP: list[tuple[str, str]] = [
     ("Ctrl+Shift+Z", "Redo"),
     ("Y", "Yank (copy)"),
     ("X", "Cut"),
+    ("D, D", "Delete"),
     ("Del", "Delete"),
     ("P / Ctrl+V", "Paste as new note"),
     ("Tab / J / L", "Select next note"),
@@ -29,84 +30,44 @@ KEYBINDING_HELP: list[tuple[str, str]] = [
 ]
 
 
-def setup_keybindings(window: MainWindow) -> None:
-    undo_shortcut = QShortcut(QKeySequence.StandardKey.Undo, window)
-    undo_shortcut.activated.connect(window.undo)
+def _shortcut(key, window: MainWindow, callback) -> QShortcut:
+    s = QShortcut(QKeySequence(key), window)
+    s.activated.connect(callback)
+    return s
 
-    redo_shortcut = QShortcut(QKeySequence("Ctrl+Shift+Z"), window)
-    redo_shortcut.activated.connect(window.redo)
 
-    redo_shortcut2 = QShortcut(QKeySequence.StandardKey.Redo, window)
-    redo_shortcut2.activated.connect(window.redo)
+def setup_keybindings(window: MainWindow) -> list[QShortcut]:
+    modal: list[QShortcut] = []
 
-    yank_shortcut = QShortcut(QKeySequence("Y"), window)
-    yank_shortcut.activated.connect(window.yank)
+    modal.append(_shortcut(QKeySequence.StandardKey.Undo, window, window.undo))
+    modal.append(_shortcut("Ctrl+Shift+Z", window, window.redo))
+    modal.append(_shortcut(QKeySequence.StandardKey.Redo, window, window.redo))
+    modal.append(_shortcut("Y", window, window.yank))
+    modal.append(_shortcut("X", window, window.cut_selected))
+    modal.append(_shortcut(Qt.Key.Key_Delete, window, window.delete_selected))
+    modal.append(_shortcut("D, D", window, window.delete_selected))
+    modal.append(_shortcut("P", window, window.paste))
+    modal.append(_shortcut(QKeySequence.StandardKey.Paste, window, window.paste))
+    modal.append(_shortcut(Qt.Key.Key_Tab, window, window.select_next))
+    modal.append(_shortcut("J", window, window.select_next))
+    modal.append(_shortcut("L", window, window.select_next))
+    modal.append(_shortcut("Shift+Tab", window, window.select_prev))
+    modal.append(_shortcut("K", window, window.select_prev))
+    modal.append(_shortcut("H", window, window.select_prev))
+    modal.append(_shortcut("Shift+H", window, window.show_text_overlay))
+    modal.append(_shortcut("Ctrl+H", window, window.scroll_left))
+    modal.append(_shortcut("Ctrl+J", window, window.scroll_down))
+    modal.append(_shortcut("Ctrl+K", window, window.scroll_up))
+    modal.append(_shortcut("Ctrl+L", window, window.scroll_right))
+    modal.append(_shortcut("Q", window, window.quit))
+    modal.append(_shortcut("U", window, window.undo))
+    modal.append(_shortcut("I", window, window.insert_right))
+    modal.append(_shortcut("O", window, window.insert_below))
+    modal.append(_shortcut("E", window, window.edit))
+    modal.append(_shortcut(Qt.Key.Key_Backspace, window, window.reset_viewport))
+    modal.append(_shortcut("?", window, window.show_keybindings_help))
 
-    cut_shortcut = QShortcut(QKeySequence("X"), window)
-    cut_shortcut.activated.connect(window.cut_selected)
+    # Escape is always active (not modal)
+    _shortcut(Qt.Key.Key_Escape, window, window.escape)
 
-    delete_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Delete), window)
-    delete_shortcut.activated.connect(window.delete_selected)
-
-    paste_shortcut = QShortcut(QKeySequence("P"), window)
-    paste_shortcut.activated.connect(window.paste)
-
-    ctrl_v_shortcut = QShortcut(QKeySequence.StandardKey.Paste, window)
-    ctrl_v_shortcut.activated.connect(window.paste)
-
-    tab_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Tab), window)
-    tab_shortcut.activated.connect(window.select_next)
-
-    j_shortcut = QShortcut(QKeySequence("J"), window)
-    j_shortcut.activated.connect(window.select_next)
-
-    l_shortcut = QShortcut(QKeySequence("L"), window)
-    l_shortcut.activated.connect(window.select_next)
-
-    shift_tab_shortcut = QShortcut(QKeySequence("Shift+Tab"), window)
-    shift_tab_shortcut.activated.connect(window.select_prev)
-
-    k_shortcut = QShortcut(QKeySequence("K"), window)
-    k_shortcut.activated.connect(window.select_prev)
-
-    h_shortcut = QShortcut(QKeySequence("H"), window)
-    h_shortcut.activated.connect(window.select_prev)
-
-    shift_h_shortcut = QShortcut(QKeySequence("Shift+H"), window)
-    shift_h_shortcut.activated.connect(window.show_text_overlay)
-
-    ctrl_h_shortcut = QShortcut(QKeySequence("Ctrl+H"), window)
-    ctrl_h_shortcut.activated.connect(window.scroll_left)
-
-    ctrl_j_shortcut = QShortcut(QKeySequence("Ctrl+J"), window)
-    ctrl_j_shortcut.activated.connect(window.scroll_down)
-
-    ctrl_k_shortcut = QShortcut(QKeySequence("Ctrl+K"), window)
-    ctrl_k_shortcut.activated.connect(window.scroll_up)
-
-    ctrl_l_shortcut = QShortcut(QKeySequence("Ctrl+L"), window)
-    ctrl_l_shortcut.activated.connect(window.scroll_right)
-
-    quit_shortcut = QShortcut(QKeySequence("Q"), window)
-    quit_shortcut.activated.connect(window.quit)
-
-    undo_shortcut_u = QShortcut(QKeySequence("U"), window)
-    undo_shortcut_u.activated.connect(window.undo)
-
-    insert_shortcut = QShortcut(QKeySequence("I"), window)
-    insert_shortcut.activated.connect(window.insert_right)
-
-    insert_below_shortcut = QShortcut(QKeySequence("O"), window)
-    insert_below_shortcut.activated.connect(window.insert_below)
-
-    edit_shortcut = QShortcut(QKeySequence("E"), window)
-    edit_shortcut.activated.connect(window.edit)
-
-    esc_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), window)
-    esc_shortcut.activated.connect(window.escape)
-
-    backspace_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Backspace), window)
-    backspace_shortcut.activated.connect(window.reset_viewport)
-
-    help_shortcut = QShortcut(QKeySequence("?"), window)
-    help_shortcut.activated.connect(window.show_keybindings_help)
+    return modal

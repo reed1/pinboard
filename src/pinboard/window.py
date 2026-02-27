@@ -52,12 +52,20 @@ class MainWindow(QMainWindow):
         self._canvas.notes_changed.connect(self._minimap.update)
         self._canvas.viewport_changed.connect(self._minimap.update)
 
-        setup_keybindings(self)
+        self._modal_shortcuts = setup_keybindings(self)
+        self._canvas.editing_started.connect(lambda: self._set_shortcuts_enabled(False))
+        self._canvas.editing_stopped.connect(lambda: self._set_shortcuts_enabled(True))
         self._update_title()
 
         self.resize(1024, 768)
         self._minimap.show()
         self._minimap.reposition()
+
+    def _set_shortcuts_enabled(self, enabled: bool) -> None:
+        for s in self._modal_shortcuts:
+            s.setEnabled(enabled)
+        for s in pb._user_shortcuts:
+            s.setEnabled(enabled)
 
     def _show_toast(self, message: str, timeout: int = DEFAULT_STATUS_TIMEOUT_MS) -> None:
         self._toast_manager.show_toast(message, timeout)
@@ -70,88 +78,58 @@ class MainWindow(QMainWindow):
             self._text_overlay.reposition()
 
     def undo(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._undo_manager.undo():
             self._show_toast("Undo")
             self._schedule_save()
 
     def redo(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._undo_manager.redo():
             self._show_toast("Redo")
             self._schedule_save()
 
     def yank(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._canvas.yank_selected():
             self._show_toast("Yanked")
 
     def cut_selected(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._canvas.cut_selected():
             self._show_toast("Cut")
 
     def delete_selected(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._canvas.delete_selected():
             self._show_toast("Deleted")
 
     def paste(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._canvas.paste_as_new_note():
             self._show_toast("Pasted")
 
     def select_next(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._close_text_overlay()
         self._canvas.select_next_note()
 
     def select_prev(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._close_text_overlay()
         self._canvas.select_prev_note()
 
     def scroll_left(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.scroll(-SCROLL_AMOUNT, 0)
 
     def scroll_right(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.scroll(SCROLL_AMOUNT, 0)
 
     def scroll_up(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.scroll(0, -SCROLL_AMOUNT)
 
     def scroll_down(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.scroll(0, SCROLL_AMOUNT)
 
     def insert_right(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.create_note_and_edit()
 
     def insert_below(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.create_note_below_and_edit()
 
     def edit(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.enter_edit_mode()
 
     def escape(self) -> None:
@@ -163,14 +141,10 @@ class MainWindow(QMainWindow):
             self._canvas.deselect_all()
 
     def reset_viewport(self) -> None:
-        if self._canvas.is_editing():
-            return
         self._canvas.reset_viewport()
         self._show_toast("Viewport reset")
 
     def show_keybindings_help(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._text_overlay:
             return
         key_col_width = max(len(k) for k, _ in KEYBINDING_HELP)
@@ -188,8 +162,6 @@ class MainWindow(QMainWindow):
         self._text_overlay.reposition()
 
     def show_text_overlay(self) -> None:
-        if self._canvas.is_editing():
-            return
         if self._text_overlay:
             return
         selected = self._canvas.get_selected_note()
@@ -208,8 +180,6 @@ class MainWindow(QMainWindow):
 
     def quit(self) -> None:
         if self._close_text_overlay():
-            return
-        if self._canvas.is_editing():
             return
         self._save_timer.stop()
         self._save()
