@@ -28,30 +28,9 @@ uv run python main.py <path/to/notes.yaml>
 
 The YAML file will be created if it doesn't exist.
 
-## Controls
+## Keybindings
 
-| Action | Input |
-|--------|-------|
-| Pan canvas | Drag empty space |
-| Zoom | Mouse wheel |
-| Reset viewport | `Backspace` |
-| Create note (right) | Right-click empty space → "New Note", or `I` |
-| Create note (below) | `O` |
-| Move note | Drag note |
-| Resize note | Click to select, drag corners |
-| Edit text | Double-click, or `E` |
-| Delete note | Right-click → "Delete", or `D, D` / `X` / `Del` |
-| Bring to front | Right-click → "Bring to Front" |
-| Send to back | Right-click → "Send to Back" |
-| Change color | Right-click → "Change Color" |
-| Yank (copy) text | `Y` |
-| Paste as new note | `P` / `Ctrl+V` |
-| Select next note | `Tab` / `J` / `L` |
-| Select prev note | `Shift+Tab` / `K` / `H` |
-| Scroll | `Ctrl+H/J/K/L` or arrow keys |
-| Undo | `Ctrl+Z` or `U` |
-| Redo | `Ctrl+Shift+Z` |
-| Quit | `Q` |
+Look at `@src/pinboard/keybindings.py`. This can be extended on local `config.py`
 
 ## Configuration
 
