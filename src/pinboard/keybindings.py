@@ -12,8 +12,7 @@ KEYBINDING_HELP: list[tuple[str, str]] = [
     ("Ctrl+Z / U", "Undo"),
     ("Ctrl+Shift+Z", "Redo"),
     ("Y", "Yank (copy)"),
-    ("X", "Cut"),
-    ("D, D", "Delete"),
+    ("D, D", "Cut"),
     ("Del", "Delete"),
     ("P / Ctrl+V", "Paste as new note"),
     ("Tab / J / L", "Select next note"),
@@ -43,9 +42,8 @@ def setup_keybindings(window: MainWindow) -> list[QShortcut]:
     modal.append(_shortcut("Ctrl+Shift+Z", window, window.redo))
     modal.append(_shortcut(QKeySequence.StandardKey.Redo, window, window.redo))
     modal.append(_shortcut("Y", window, window.yank))
-    modal.append(_shortcut("X", window, window.cut_selected))
     modal.append(_shortcut(Qt.Key.Key_Delete, window, window.delete_selected))
-    modal.append(_shortcut("D, D", window, window.delete_selected))
+    modal.append(_shortcut("D, D", window, window.cut_selected))
     modal.append(_shortcut("P", window, window.paste))
     modal.append(_shortcut(QKeySequence.StandardKey.Paste, window, window.paste))
     modal.append(_shortcut(Qt.Key.Key_Tab, window, window.select_next))
