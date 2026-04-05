@@ -39,6 +39,18 @@ class EditableTextItem(QGraphicsTextItem):
             else:
                 self.enter_pressed.emit()
             return
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            cursor = self.textCursor()
+            if event.key() == Qt.Key.Key_W:
+                cursor.movePosition(cursor.MoveOperation.PreviousWord, cursor.MoveMode.KeepAnchor)
+                cursor.removeSelectedText()
+                self.setTextCursor(cursor)
+                return
+            if event.key() == Qt.Key.Key_U:
+                cursor.movePosition(cursor.MoveOperation.StartOfBlock, cursor.MoveMode.KeepAnchor)
+                cursor.removeSelectedText()
+                self.setTextCursor(cursor)
+                return
         super().keyPressEvent(event)
 
 
