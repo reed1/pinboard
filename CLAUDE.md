@@ -28,6 +28,18 @@ uv run python main.py <path/to/notes.yaml>
 
 The YAML file will be created if it doesn't exist.
 
+Notes can also be worked on without the GUI, which is how other tools reach a board:
+
+```bash
+pinboard list <file> [--json]      # notes sorted by id
+pinboard add <file> <text>         # add a note
+pinboard edit <file> <id> <text>   # replace a note's text
+pinboard delete <file> <id>        # remove a note
+```
+
+`edit` and `delete` exit non-zero when no note carries that id. An open GUI window picks these
+changes up on its own — it watches the file.
+
 ## Keybindings
 
 Look at `@src/pinboard/keybindings.py`. This can be extended on local `config.py`
@@ -99,7 +111,10 @@ pinboard/
     │   └── toast.py         # Toast notifications
     └── commands/
         ├── open.py          # GUI open command
-        └── push.py          # CLI push command
+        ├── list.py          # CLI list command
+        ├── add.py           # CLI add command
+        ├── edit.py          # CLI edit command
+        └── delete.py        # CLI delete command
 ```
 
 ## License
