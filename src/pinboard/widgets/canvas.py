@@ -51,7 +51,9 @@ class PinboardCanvas(QGraphicsView):
         self._pan_start: QPointF | None = None
 
         self.setRenderHints(
-            self.renderHints() | QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform
+            self.renderHints()
+            | QPainter.RenderHint.Antialiasing
+            | QPainter.RenderHint.SmoothPixmapTransform
         )
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -333,7 +335,9 @@ class PinboardCanvas(QGraphicsView):
             self._notes[note_id].set_text(text)
             self.notes_changed.emit()
 
-    def _on_note_moved(self, note_id: int, old_x: float, old_y: float, new_x: float, new_y: float) -> None:
+    def _on_note_moved(
+        self, note_id: int, old_x: float, old_y: float, new_x: float, new_y: float
+    ) -> None:
         action = MoveNoteAction(
             note_id=note_id,
             old_x=old_x,
@@ -344,7 +348,9 @@ class PinboardCanvas(QGraphicsView):
         )
         self._undo_manager.push(action)
 
-    def _on_note_resized(self, note_id: int, old_w: float, old_h: float, new_w: float, new_h: float) -> None:
+    def _on_note_resized(
+        self, note_id: int, old_w: float, old_h: float, new_w: float, new_h: float
+    ) -> None:
         action = ResizeNoteAction(
             note_id=note_id,
             old_width=old_w,

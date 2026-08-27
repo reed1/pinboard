@@ -4,7 +4,13 @@ from typing import Any
 
 from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
-from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem, QStyle, QStyleOptionGraphicsItem
+from PySide6.QtWidgets import (
+    QGraphicsItem,
+    QGraphicsRectItem,
+    QGraphicsTextItem,
+    QStyle,
+    QStyleOptionGraphicsItem,
+)
 
 from pinboard.models.note import utc_now
 
@@ -168,7 +174,9 @@ class NoteItem(QGraphicsRectItem):
                         if current_line:
                             wrapped_lines.append(current_line)
                         if metrics.horizontalAdvance(word) > available_width:
-                            current_line = metrics.elidedText(word, Qt.TextElideMode.ElideRight, available_width)
+                            current_line = metrics.elidedText(
+                                word, Qt.TextElideMode.ElideRight, available_width
+                            )
                         else:
                             current_line = word
                 if current_line:
@@ -181,7 +189,9 @@ class NoteItem(QGraphicsRectItem):
                 if i == max_lines - 1 and len(wrapped_lines) > max_lines:
                     line = (
                         metrics.elidedText(
-                            line, Qt.TextElideMode.ElideRight, available_width - metrics.horizontalAdvance("...")
+                            line,
+                            Qt.TextElideMode.ElideRight,
+                            available_width - metrics.horizontalAdvance("..."),
                         )
                         + "..."
                     )
@@ -272,7 +282,9 @@ class NoteItem(QGraphicsRectItem):
             new_pos = self.pos()
             if old_pos != new_pos:
                 self.adjusted_at = utc_now()
-                self.signals.moved.emit(self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y())
+                self.signals.moved.emit(
+                    self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y()
+                )
                 self.signals.changed.emit()
             self._move_start_pos = None
 
