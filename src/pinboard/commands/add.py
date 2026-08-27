@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import random
 from pathlib import Path
 
@@ -8,7 +9,18 @@ from pinboard.models.note import Note, utc_now
 from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
 
 
+def parse_metadata(raw: str | None) -> dict:
+    if raw is None:
+        return {}
+
+    metadata = json.loads(raw)
+    if not isinstance(metadata, dict):
+        raise SystemExit("--metadata must be a JSON object")
+    return metadata
+
+
 def run(args: argparse.Namespace) -> None:
+    metadata = parse_metadata(args.metadata)
     user_config_path = Path.home() / ".config" / "pinboard" / "config.yaml"
     config = load_config(user_config_path)
 
@@ -36,6 +48,7 @@ def run(args: argparse.Namespace) -> None:
         order=max_order + 1,
         color=random.choice(config.palette),
         created_at=utc_now(),
+        metadata=metadata,
     )
     notes.append(note)
     save_notes(args.file, notes)

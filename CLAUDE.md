@@ -32,7 +32,7 @@ Notes can also be worked on without the GUI, which is how other tools reach a bo
 
 ```bash
 pinboard list <file> [--json]      # notes sorted by id
-pinboard add <file> <text>         # add a note
+pinboard add <file> <text> [--metadata JSON]   # add a note, optionally with metadata
 pinboard edit <file> <id> <text>   # replace a note's text
 pinboard delete <file> <id>        # remove a note
 ```

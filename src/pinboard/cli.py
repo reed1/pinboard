@@ -24,6 +24,9 @@ def main() -> None:
     add_parser = subparsers.add_parser("add", help="Add a new note via CLI")
     add_parser.add_argument("file", type=Path, help="Path to the YAML file")
     add_parser.add_argument("text", help="Text content for the new note")
+    add_parser.add_argument(
+        "--metadata", help="JSON object to hang on the new note's metadata mapping"
+    )
 
     edit_parser = subparsers.add_parser("edit", help="Replace the text of a note")
     edit_parser.add_argument("file", type=Path, help="Path to the YAML file")
