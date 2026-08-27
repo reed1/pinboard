@@ -85,10 +85,17 @@ notes:
     created_at: "2024-01-15T10:30:00Z"
     edited_at: "2024-01-15T11:45:00Z"
     adjusted_at: "2024-01-15T12:00:00Z"
-next_id: 2
+    metadata:
+      ticket: ENG-441
 ```
 
 Timestamps use ISO 8601 UTC format. `created_at` is set when a note is created. `edited_at` is updated when text content changes. `adjusted_at` is updated when position, size, z-order, or color changes.
+
+`metadata` is a free-form mapping for other tools to hang their own keys off a note, kept out of
+the text so it does not show on the board. Pinboard never reads what is in it — it carries the keys
+through load and save untouched, so an open GUI window, an undo, or a `pinboard edit` will not drop
+them. A note with no metadata has the key omitted rather than written as `{}`, so notes that never
+carry any stay byte-identical to how they look today.
 
 ## Project Structure
 

@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from typing import Any
 
 
 def utc_now() -> str:
@@ -19,6 +20,7 @@ class Note:
     created_at: str | None = None
     edited_at: str | None = None
     adjusted_at: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         d = {
@@ -37,6 +39,8 @@ class Note:
             d["edited_at"] = self.edited_at
         if self.adjusted_at:
             d["adjusted_at"] = self.adjusted_at
+        if self.metadata:
+            d["metadata"] = self.metadata
         return d
 
     @classmethod
@@ -53,4 +57,5 @@ class Note:
             created_at=data.get("created_at"),
             edited_at=data.get("edited_at"),
             adjusted_at=data.get("adjusted_at"),
+            metadata=data.get("metadata") or {},
         )

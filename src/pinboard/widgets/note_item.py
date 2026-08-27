@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from PySide6.QtCore import QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsRectItem, QGraphicsTextItem, QStyle, QStyleOptionGraphicsItem
@@ -71,6 +73,7 @@ class NoteItem(QGraphicsRectItem):
         created_at: str | None = None,
         edited_at: str | None = None,
         adjusted_at: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         super().__init__(0, 0, width, height)
         self.setPos(x, y)
@@ -85,6 +88,7 @@ class NoteItem(QGraphicsRectItem):
         self.created_at = created_at
         self.edited_at = edited_at
         self.adjusted_at = adjusted_at
+        self.metadata = metadata if metadata is not None else {}
 
         self.signals = NoteSignals()
 

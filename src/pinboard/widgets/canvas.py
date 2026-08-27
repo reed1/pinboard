@@ -108,6 +108,7 @@ class PinboardCanvas(QGraphicsView):
                 created_at=item.created_at,
                 edited_at=item.edited_at,
                 adjusted_at=item.adjusted_at,
+                metadata=item.metadata,
             )
             for item in self._notes.values()
         ]
@@ -128,6 +129,7 @@ class PinboardCanvas(QGraphicsView):
             created_at=note.created_at,
             edited_at=note.edited_at,
             adjusted_at=note.adjusted_at,
+            metadata=note.metadata,
         )
         self._scene.addItem(item)
         self._notes[note.id] = item
@@ -233,6 +235,7 @@ class PinboardCanvas(QGraphicsView):
             created_at=item.created_at,
             edited_at=item.edited_at,
             adjusted_at=item.adjusted_at,
+            metadata=item.metadata,
         )
 
         action = DeleteNoteAction(
