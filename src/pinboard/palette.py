@@ -9,11 +9,13 @@ PROMPT = "Pinboard"
 
 
 def _row(command: Command) -> str:
-    key = html.escape(command.keys)
+    description = html.escape(command.description)
+    if not command.keys:
+        return description
     return (
-        f'<span alpha="60%"><b>{key}</b></span>'
+        f'<span alpha="60%"><b>{html.escape(command.keys)}</b></span>'
         f'<span alpha="40%"> - </span>'
-        f"{html.escape(command.description)}"
+        f"{description}"
     )
 
 

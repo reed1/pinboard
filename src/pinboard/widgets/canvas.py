@@ -11,8 +11,10 @@ from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QMenu
 from pinboard.models.note import Note, utc_now
 from pinboard.storage.yaml_storage import Config
 from pinboard.undo_manager import (
+    Action,
     ChangeColorAction,
     ChangeOrderAction,
+    CompositeAction,
     CreateNoteAction,
     DeleteNoteAction,
     EditTextAction,
@@ -114,6 +116,49 @@ class PinboardCanvas(QGraphicsView):
             )
             for item in self._notes.values()
         ]
+
+    def rearrange_notes(self) -> bool:
+        if not self._notes:
+            return False
+
+        padding = self._config.padding
+        width = self._config.default_width
+        height = self._config.default_height
+        min_x, min_y, max_x, _ = self._get_viewport_scene_rect()
+        columns = max(1, int((max_x - min_x - padding) // (width + padding)))
+
+        actions: list[Action] = []
+        for index, note_id in enumerate(sorted(self._notes)):
+            item = self._notes[note_id]
+            x = min_x + padding + (index % columns) * (width + padding)
+            y = min_y + padding + (index // columns) * (height + padding)
+            actions.append(
+                MoveNoteAction(
+                    note_id=note_id,
+                    old_x=item.pos().x(),
+                    old_y=item.pos().y(),
+                    new_x=x,
+                    new_y=y,
+                    update_callback=self._update_note_position,
+                )
+            )
+            actions.append(
+                ResizeNoteAction(
+                    note_id=note_id,
+                    old_width=item.rect().width(),
+                    old_height=item.rect().height(),
+                    new_width=width,
+                    new_height=height,
+                    update_callback=self._update_note_size,
+                )
+            )
+            item.setPos(x, y)
+            item.setRect(0, 0, width, height)
+            item.adjusted_at = utc_now()
+
+        self._undo_manager.push(CompositeAction(actions))
+        self.notes_changed.emit()
+        return True
 
     def _add_note_item(self, note: Note, record_undo: bool = True) -> NoteItem:
         item = NoteItem(

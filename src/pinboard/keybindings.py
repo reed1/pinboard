@@ -47,6 +47,7 @@ BINDINGS: list[Binding] = [
     Binding(("Q",), "Quit", "quit"),
     Binding(("?",), "Show keybindings", "show_keybindings_help"),
     Binding(("Space",), "Show command palette", "show_command_palette"),
+    Binding((), "Rearrange notes by id", "rearrange"),
 ]
 
 

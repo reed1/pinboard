@@ -141,6 +141,10 @@ class MainWindow(QMainWindow):
         else:
             self._canvas.deselect_all()
 
+    def rearrange(self) -> None:
+        if self._canvas.rearrange_notes():
+            self._show_toast("Rearranged")
+
     def reset_viewport(self) -> None:
         self._canvas.reset_viewport()
         self._show_toast("Viewport reset")
@@ -148,9 +152,10 @@ class MainWindow(QMainWindow):
     def show_keybindings_help(self) -> None:
         if self._text_overlay:
             return
-        key_col_width = max(len(c.keys) for c in commands(self))
+        bound = [c for c in commands(self) if c.keys]
+        key_col_width = max(len(c.keys) for c in bound)
         lines = ["KEYBINDINGS", ""]
-        for command in commands(self):
+        for command in bound:
             lines.append(f"  {command.keys.ljust(key_col_width)}   {command.description}")
         if pb._commands:
             key_col_width = max(key_col_width, max(len(c.keys) for c in pb._commands))

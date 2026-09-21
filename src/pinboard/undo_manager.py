@@ -44,6 +44,19 @@ class DeleteNoteAction(Action):
 
 
 @dataclass
+class CompositeAction(Action):
+    actions: list[Action]
+
+    def undo(self) -> None:
+        for action in reversed(self.actions):
+            action.undo()
+
+    def redo(self) -> None:
+        for action in self.actions:
+            action.redo()
+
+
+@dataclass
 class MoveNoteAction(Action):
     note_id: int
     old_x: float

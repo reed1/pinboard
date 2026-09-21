@@ -12,6 +12,7 @@ A lightweight desktop sticky notes application with YAML-based storage for easy 
 - **Z-Ordering** - Bring to front / send to back via right-click menu
 - **Undo/Redo** - Ctrl+Z / Ctrl+Shift+Z
 - **Command Palette** - Space opens a rofi menu of every keybinding's action, built-in and user-defined; picking one runs it
+- **Rearrange** - `Rearrange notes by id` reflows the board into a grid: ids ascending, left to right then top to bottom, every note at the default size, wrapping at the window's width. Palette only, no key
 - **Auto-save** - Changes saved automatically (debounced 500ms)
 - **Git-friendly** - Notes stored in plain YAML files
 
