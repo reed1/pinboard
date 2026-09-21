@@ -11,6 +11,7 @@ A lightweight desktop sticky notes application with YAML-based storage for easy 
 - **Color Palette** - Right-click to change note colors (configurable pastel palette)
 - **Z-Ordering** - Bring to front / send to back via right-click menu
 - **Undo/Redo** - Ctrl+Z / Ctrl+Shift+Z
+- **Command Palette** - Space opens a rofi menu of every keybinding's action, built-in and user-defined; picking one runs it
 - **Auto-save** - Changes saved automatically (debounced 500ms)
 - **Git-friendly** - Notes stored in plain YAML files
 
@@ -67,6 +68,9 @@ pb: PinboardAPI
 
 pb.add_keybinding("Ctrl+Shift+N", lambda: pb.toast("Hello!"))
 ```
+
+A keybinding shows up in the command palette under the callback's name, or under a third
+`description` argument when one is given.
 
 ## Data Format
 

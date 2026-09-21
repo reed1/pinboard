@@ -7,7 +7,8 @@ from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 from pinboard.api import pb
-from pinboard.keybindings import KEYBINDING_HELP, setup_keybindings
+from pinboard.keybindings import commands, setup_keybindings
+from pinboard.palette import choose_command
 from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
 from pinboard.undo_manager import UndoManager
 from pinboard.widgets.canvas import PinboardCanvas
@@ -147,19 +148,27 @@ class MainWindow(QMainWindow):
     def show_keybindings_help(self) -> None:
         if self._text_overlay:
             return
-        key_col_width = max(len(k) for k, _ in KEYBINDING_HELP)
+        key_col_width = max(len(c.keys) for c in commands(self))
         lines = ["KEYBINDINGS", ""]
-        for key, desc in KEYBINDING_HELP:
-            lines.append(f"  {key.ljust(key_col_width)}   {desc}")
-        user_bindings = pb._keybinding_registry
-        if user_bindings:
-            key_col_width = max(key_col_width, max(len(k) for k, _ in user_bindings))
+        for command in commands(self):
+            lines.append(f"  {command.keys.ljust(key_col_width)}   {command.description}")
+        if pb._commands:
+            key_col_width = max(key_col_width, max(len(c.keys) for c in pb._commands))
             lines += ["", "USER KEYBINDINGS", ""]
-            for key, desc in user_bindings:
-                lines.append(f"  {key.ljust(key_col_width)}   {desc}")
+            for command in pb._commands:
+                lines.append(f"  {command.keys.ljust(key_col_width)}   {command.description}")
         self._text_overlay = TextOverlayWidget("\n".join(lines), self)
         self._text_overlay.show()
         self._text_overlay.reposition()
+
+    def show_command_palette(self) -> None:
+        self._close_text_overlay()
+        command = choose_command(commands(self) + pb._commands)
+        if command is None:
+            return
+        # Let the window settle back in before the action runs: rofi held the
+        # keyboard grab until it exited.
+        QTimer.singleShot(0, command.callback)
 
     def show_text_overlay(self) -> None:
         if self._text_overlay:
