@@ -42,6 +42,12 @@ pinboard delete <file> <id>        # remove a note
 `edit` and `delete` exit non-zero when no note carries that id. An open GUI window picks these
 changes up on its own — it watches the file.
 
+Every write replaces the board whole — a temp file renamed over it — and an open window reloads
+only a file that reads as a whole board, once it has settled. Other writers are not so careful:
+git's checkout unlinks a board before writing its replacement, and a window that reloaded in
+between would show an empty board, then save it on close. A window also skips saving a board that
+has not changed since it last read or wrote the file.
+
 ## Keybindings
 
 Look at `@src/pinboard/keybindings.py`. This can be extended on local `config.py`

@@ -9,7 +9,13 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from pinboard.api import pb
 from pinboard.keybindings import commands, setup_keybindings
 from pinboard.palette import choose_command
-from pinboard.storage.yaml_storage import load_config, load_notes, save_notes
+from pinboard.storage.yaml_storage import (
+    dump_notes,
+    load_config,
+    load_notes,
+    read_board,
+    write_board,
+)
 from pinboard.undo_manager import UndoManager
 from pinboard.widgets.canvas import PinboardCanvas
 from pinboard.widgets.minimap import MinimapWidget
@@ -20,6 +26,8 @@ USER_CONFIG_DIR = Path.home() / ".config" / "pinboard"
 USER_CONFIG_YAML = USER_CONFIG_DIR / "config.yaml"
 USER_CONFIG_PY = USER_CONFIG_DIR / "config.py"
 SAVE_DEBOUNCE_MS = 500
+RELOAD_DEBOUNCE_MS = 200
+RELOAD_MAX_ATTEMPTS = 25
 DEFAULT_STATUS_TIMEOUT_MS = 2000
 SCROLL_AMOUNT = 100
 
@@ -34,9 +42,16 @@ class MainWindow(QMainWindow):
         self._save_timer.setSingleShot(True)
         self._save_timer.timeout.connect(self._save)
 
-        self._ignore_next_change = False
-        self._file_watcher = QFileSystemWatcher([str(file_path)])
+        # A change on disk is read once it has settled rather than the moment it lands: another
+        # writer may be between steps, and what it has left so far is not the board.
+        self._reload_timer = QTimer()
+        self._reload_timer.setSingleShot(True)
+        self._reload_timer.timeout.connect(self._reload)
+        self._reload_attempts = 0
+
+        self._file_watcher = QFileSystemWatcher()
         self._file_watcher.fileChanged.connect(self._on_file_changed)
+        self._ensure_watching()
 
         config = load_config(USER_CONFIG_YAML)
         self._canvas = PinboardCanvas(config, self._undo_manager)
@@ -46,6 +61,10 @@ class MainWindow(QMainWindow):
         self._minimap = MinimapWidget(self._canvas, self)
         self._text_overlay: TextOverlayWidget | None = None
 
+        # The board as it last stood on disk, whether this window wrote it or read it. A change
+        # event carrying this same text is this window's own save, and a save of this same text
+        # has nothing to write.
+        self._synced_text = file_path.read_text() if file_path.exists() else None
         notes = load_notes(file_path)
         self._canvas.load_notes(notes)
 
@@ -195,8 +214,7 @@ class MainWindow(QMainWindow):
     def quit(self) -> None:
         if self._close_text_overlay():
             return
-        self._save_timer.stop()
-        self._save()
+        self._flush()
         self._show_toast("Saved")
         QApplication.quit()
 
@@ -204,20 +222,46 @@ class MainWindow(QMainWindow):
         self._save_timer.start(SAVE_DEBOUNCE_MS)
 
     def _save(self) -> None:
-        self._ignore_next_change = True
-        notes = self._canvas.get_notes()
-        save_notes(self._file_path, notes)
-
-    def _on_file_changed(self, path: str) -> None:
-        self._ensure_watching(path)
-        if self._ignore_next_change:
-            self._ignore_next_change = False
+        text = dump_notes(self._canvas.get_notes())
+        if text == self._synced_text:
             return
+        write_board(self._file_path, text)
+        self._synced_text = text
+        self._ensure_watching()
+
+    def _flush(self) -> None:
+        """A change on disk still waiting to be read goes in first, so saving on the way out does
+        not write the board back over it."""
+        self._save_timer.stop()
+        if self._reload_timer.isActive():
+            self._reload_timer.stop()
+            self._reload()
+        self._save()
+
+    def _on_file_changed(self, _path: str) -> None:
+        self._reload_attempts = 0
+        self._reload_timer.start(RELOAD_DEBOUNCE_MS)
+
+    def _reload(self) -> None:
+        self._ensure_watching()
+        board = read_board(self._file_path)
+        if board is None:
+            self._reload_attempts += 1
+            if self._reload_attempts < RELOAD_MAX_ATTEMPTS:
+                self._reload_timer.start(RELOAD_DEBOUNCE_MS)
+            else:
+                self._show_toast("Board file unreadable, keeping the notes shown")
+            return
+
+        text, notes = board
+        if text == self._synced_text:
+            return
+        self._synced_text = text
+
         if self._canvas.is_editing():
             self._canvas.exit_edit_mode()
         selected = self._canvas.get_selected_note()
         selected_id = selected.note_id if selected else None
-        notes = load_notes(self._file_path)
         self._canvas.load_notes(notes)
         if selected_id is not None and selected_id not in self._canvas._notes:
             self._canvas.deselect_all()
@@ -227,16 +271,17 @@ class MainWindow(QMainWindow):
         self._undo_manager.clear()
         self._show_toast("Reloaded")
 
-    def _ensure_watching(self, path: str) -> None:
-        if path not in self._file_watcher.files():
+    def _ensure_watching(self) -> None:
+        """A replaced file is a new inode, and the watch on the old one goes with it."""
+        path = str(self._file_path)
+        if self._file_path.exists() and path not in self._file_watcher.files():
             self._file_watcher.addPath(path)
 
     def _update_title(self) -> None:
         self.setWindowTitle(f"Pinboard - {self._file_path.name}")
 
     def closeEvent(self, event) -> None:
-        self._save_timer.stop()
-        self._save()
+        self._flush()
         event.accept()
 
 

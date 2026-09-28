@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import stat
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,10 +55,48 @@ def load_notes(filepath: Path) -> list[Note]:
     return [Note.from_dict(n) for n in data.get("notes", [])]
 
 
-def save_notes(filepath: Path, notes: list[Note]) -> None:
+def read_board(filepath: Path) -> tuple[str, list[Note]] | None:
+    """The file's text and notes, or None when the file is not a whole board: missing, blank, or
+    cut off mid-note. Pinboard never leaves a board in any of those states — every save writes at
+    least `notes: []` — so each is some other writer caught between steps: git's checkout unlinks
+    a file before writing its replacement."""
+    try:
+        text = filepath.read_text()
+    except FileNotFoundError:
+        return None
+
+    try:
+        data = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("notes"), list):
+        return None
+
+    try:
+        notes = [Note.from_dict(n) for n in data["notes"]]
+    except (KeyError, TypeError):
+        return None
+    return text, notes
+
+
+def dump_notes(notes: list[Note]) -> str:
     data = {"notes": [n.to_dict() for n in notes]}
-    with open(filepath, "w") as f:
-        yaml.dump(data, f, default_flow_style=None, sort_keys=False)
+    return yaml.dump(data, default_flow_style=None, sort_keys=False)
+
+
+def write_board(filepath: Path, text: str) -> None:
+    """Written beside the board and renamed over it, so a reader — an open window reloading, a
+    CLI call — sees the old board or the new one, never one cut short."""
+    mode = stat.S_IMODE(filepath.stat().st_mode) if filepath.exists() else 0o644
+    fd, tmp_path = tempfile.mkstemp(dir=filepath.parent, prefix=f".{filepath.name}.")
+    with os.fdopen(fd, "w") as f:
+        f.write(text)
+    os.chmod(tmp_path, mode)
+    os.replace(tmp_path, filepath)
+
+
+def save_notes(filepath: Path, notes: list[Note]) -> None:
+    write_board(filepath, dump_notes(notes))
 
 
 def load_config(user_config_path: Path | None = None) -> Config:
