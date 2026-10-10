@@ -64,7 +64,10 @@ palette:
   - [180, 230, 180, 255]  # Pastel green
 ```
 
-Available options: `palette`, `text_color`, `canvas_background`, `font_family`, `font_size`, `default_width`, `default_height`, `padding`
+Available options: `palette`, `text_color`, `canvas_background`, `font_family`, `font_size`, `default_width`, `default_height`, `padding`, `wrap_width`
+
+`pinboard add` places a note right of the note with the highest id. One that would reach past
+`wrap_width` starts a new row instead, at the left edge below the lowest note.
 
 For custom keybindings and scripting, create `~/.config/pinboard/config.py`:
 

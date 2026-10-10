@@ -21,6 +21,7 @@ class Config:
     default_width: int
     default_height: int
     padding: int
+    wrap_width: int
 
 
 DEFAULT_CONFIG = {
@@ -39,6 +40,7 @@ DEFAULT_CONFIG = {
     "default_width": 240,
     "default_height": 160,
     "padding": 20,
+    "wrap_width": 2360,
 }
 
 
@@ -117,4 +119,5 @@ def load_config(user_config_path: Path | None = None) -> Config:
         default_width=data["default_width"],
         default_height=data["default_height"],
         padding=data["padding"],
+        wrap_width=data["wrap_width"],
     )

@@ -32,6 +32,9 @@ def run(args: argparse.Namespace) -> None:
         last_note = max(notes, key=lambda n: n.id)
         x = last_note.x + last_note.width + config.padding
         y = last_note.y
+        if x + config.default_width > config.wrap_width:
+            x = config.padding
+            y = max(n.y + n.height for n in notes) + config.padding
     else:
         max_id = 0
         max_order = 0
