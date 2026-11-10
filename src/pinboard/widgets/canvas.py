@@ -99,23 +99,7 @@ class PinboardCanvas(QGraphicsView):
             self._next_id = 1
 
     def get_notes(self) -> list[Note]:
-        return [
-            Note(
-                id=item.note_id,
-                x=item.pos().x(),
-                y=item.pos().y(),
-                width=item.rect().width(),
-                height=item.rect().height(),
-                text=item.text,
-                order=item.order,
-                color=item.color,
-                created_at=item.created_at,
-                edited_at=item.edited_at,
-                adjusted_at=item.adjusted_at,
-                metadata=item.metadata,
-            )
-            for item in self._notes.values()
-        ]
+        return [item.to_note() for item in self._notes.values()]
 
     def rearrange_notes(self) -> bool:
         if not self._notes:
@@ -125,18 +109,19 @@ class PinboardCanvas(QGraphicsView):
         width = self._config.default_width
         height = self._config.default_height
         min_x, min_y, max_x, _ = self._get_viewport_scene_rect()
-        columns = max(1, int((max_x - min_x - padding) // (width + padding)))
+        columns = max(1, (max_x - min_x - padding) // (width + padding))
 
         actions: list[Action] = []
         for index, note_id in enumerate(sorted(self._notes)):
             item = self._notes[note_id]
+            old_x, old_y, old_width, old_height = item.geometry()
             x = min_x + padding + (index % columns) * (width + padding)
             y = min_y + padding + (index // columns) * (height + padding)
             actions.append(
                 MoveNoteAction(
                     note_id=note_id,
-                    old_x=item.pos().x(),
-                    old_y=item.pos().y(),
+                    old_x=old_x,
+                    old_y=old_y,
                     new_x=x,
                     new_y=y,
                     update_callback=self._update_note_position,
@@ -145,8 +130,8 @@ class PinboardCanvas(QGraphicsView):
             actions.append(
                 ResizeNoteAction(
                     note_id=note_id,
-                    old_width=item.rect().width(),
-                    old_height=item.rect().height(),
+                    old_width=old_width,
+                    old_height=old_height,
                     new_width=width,
                     new_height=height,
                     update_callback=self._update_note_size,
@@ -199,52 +184,51 @@ class PinboardCanvas(QGraphicsView):
 
         return item
 
-    def _get_viewport_scene_rect(self):
+    def _get_viewport_scene_rect(self) -> tuple[int, int, int, int]:
         viewport_rect = self.viewport().rect()
         top_left = self.mapToScene(viewport_rect.topLeft())
         bottom_right = self.mapToScene(viewport_rect.bottomRight())
-        return top_left.x(), top_left.y(), bottom_right.x(), bottom_right.y()
+        return (
+            round(top_left.x()),
+            round(top_left.y()),
+            round(bottom_right.x()),
+            round(bottom_right.y()),
+        )
 
-    def _calculate_position_right(self) -> tuple[float, float]:
-        padding = self._config.padding
+    def _anchor_note(self) -> NoteItem | None:
+        """The note a new one is placed against: the selected one, else the highest id."""
         selected = self.get_selected_note()
         if selected:
-            return (selected.pos().x() + selected.rect().width() + padding, selected.pos().y())
+            return selected
         if not self._notes:
-            return (padding, padding)
-        max_id = max(self._notes.keys())
-        last_note = self._notes[max_id]
-        return (last_note.pos().x() + last_note.rect().width() + padding, last_note.pos().y())
+            return None
+        return self._notes[max(self._notes.keys())]
 
-    def _calculate_position_below(self) -> tuple[float, float]:
+    def _calculate_position_right(self) -> tuple[int, int]:
         padding = self._config.padding
-        selected = self.get_selected_note()
-        if selected:
-            return (selected.pos().x(), selected.pos().y() + selected.rect().height() + padding)
-        if not self._notes:
+        anchor = self._anchor_note()
+        if anchor is None:
             return (padding, padding)
-        max_id = max(self._notes.keys())
-        last_note = self._notes[max_id]
-        return (last_note.pos().x(), last_note.pos().y() + last_note.rect().height() + padding)
+        x, y, width, _ = anchor.geometry()
+        return (x + width + padding, y)
 
-    def _calculate_position_smart(self) -> tuple[float, float]:
+    def _calculate_position_below(self) -> tuple[int, int]:
+        padding = self._config.padding
+        anchor = self._anchor_note()
+        if anchor is None:
+            return (padding, padding)
+        x, y, _, height = anchor.geometry()
+        return (x, y + height + padding)
+
+    def _calculate_position_smart(self) -> tuple[int, int]:
         x, y = self._calculate_position_right()
         viewport_min_x, _, viewport_max_x, _ = self._get_viewport_scene_rect()
         if x + self._config.default_width > viewport_max_x:
-            padding = self._config.padding
-            selected = self.get_selected_note()
-            if selected:
-                new_y = selected.pos().y() + selected.rect().height() + padding
-            elif self._notes:
-                max_id = max(self._notes.keys())
-                last_note = self._notes[max_id]
-                new_y = last_note.pos().y() + last_note.rect().height() + padding
-            else:
-                new_y = padding
-            return viewport_min_x + padding, new_y
+            _, new_y = self._calculate_position_below()
+            return viewport_min_x + self._config.padding, new_y
         return x, y
 
-    def _create_note_at(self, x: float, y: float) -> NoteItem:
+    def _create_note_at(self, x: int, y: int) -> NoteItem:
         color = random.choice(self._config.palette)
         order = self._get_max_order() + 1
 
@@ -270,23 +254,8 @@ class PinboardCanvas(QGraphicsView):
             self._scene.removeItem(item)
 
     def _delete_note(self, item: NoteItem) -> None:
-        note_data = Note(
-            id=item.note_id,
-            x=item.pos().x(),
-            y=item.pos().y(),
-            width=item.rect().width(),
-            height=item.rect().height(),
-            text=item.text,
-            order=item.order,
-            color=item.color,
-            created_at=item.created_at,
-            edited_at=item.edited_at,
-            adjusted_at=item.adjusted_at,
-            metadata=item.metadata,
-        )
-
         action = DeleteNoteAction(
-            note_data=note_data,
+            note_data=item.to_note(),
             recreate_callback=lambda n: self._add_note_item(n, record_undo=False),
             delete_callback=self._delete_note_by_id,
         )
@@ -365,12 +334,12 @@ class PinboardCanvas(QGraphicsView):
             self._notes[note_id].set_color(color)
             self.notes_changed.emit()
 
-    def _update_note_position(self, note_id: int, x: float, y: float) -> None:
+    def _update_note_position(self, note_id: int, x: int, y: int) -> None:
         if note_id in self._notes:
             self._notes[note_id].setPos(x, y)
             self.notes_changed.emit()
 
-    def _update_note_size(self, note_id: int, width: float, height: float) -> None:
+    def _update_note_size(self, note_id: int, width: int, height: int) -> None:
         if note_id in self._notes:
             self._notes[note_id].setRect(0, 0, width, height)
             self.notes_changed.emit()
@@ -380,9 +349,7 @@ class PinboardCanvas(QGraphicsView):
             self._notes[note_id].set_text(text)
             self.notes_changed.emit()
 
-    def _on_note_moved(
-        self, note_id: int, old_x: float, old_y: float, new_x: float, new_y: float
-    ) -> None:
+    def _on_note_moved(self, note_id: int, old_x: int, old_y: int, new_x: int, new_y: int) -> None:
         action = MoveNoteAction(
             note_id=note_id,
             old_x=old_x,
@@ -394,7 +361,7 @@ class PinboardCanvas(QGraphicsView):
         self._undo_manager.push(action)
 
     def _on_note_resized(
-        self, note_id: int, old_w: float, old_h: float, new_w: float, new_h: float
+        self, note_id: int, old_w: int, old_h: int, new_w: int, new_h: int
     ) -> None:
         action = ResizeNoteAction(
             note_id=note_id,

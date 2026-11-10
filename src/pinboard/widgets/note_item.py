@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QRectF, Qt, Signal, QObject
+from PySide6.QtCore import QPointF, QRectF, Qt, Signal, QObject
 from PySide6.QtGui import QBrush, QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (
     QGraphicsItem,
@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QStyleOptionGraphicsItem,
 )
 
-from pinboard.models.note import utc_now
+from pinboard.models.note import Note, utc_now
 
 MIN_WIDTH = 100
 MIN_HEIGHT = 60
@@ -23,8 +23,8 @@ SELECTION_BORDER_COLOR = (0, 150, 255, 255)
 
 
 class NoteSignals(QObject):
-    moved = Signal(int, float, float, float, float)  # id, old_x, old_y, new_x, new_y
-    resized = Signal(int, float, float, float, float)  # id, old_w, old_h, new_w, new_h
+    moved = Signal(int, int, int, int, int)  # id, old_x, old_y, new_x, new_y
+    resized = Signal(int, int, int, int, int)  # id, old_w, old_h, new_w, new_h
     text_changed = Signal(int, str, str)  # id, old_text, new_text
     changed = Signal()
     edit_started = Signal()
@@ -66,10 +66,10 @@ class NoteItem(QGraphicsRectItem):
     def __init__(
         self,
         note_id: int,
-        x: float,
-        y: float,
-        width: float,
-        height: float,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
         text: str,
         order: int,
         color: tuple[int, int, int, int],
@@ -235,6 +235,33 @@ class NoteItem(QGraphicsRectItem):
             return "br"
         return None
 
+    def geometry(self) -> tuple[int, int, int, int]:
+        """Whole pixels, which is all a note ever sits on: moves and resizes snap to them."""
+        pos, rect = self.pos(), self.rect()
+        return round(pos.x()), round(pos.y()), round(rect.width()), round(rect.height())
+
+    def to_note(self) -> Note:
+        x, y, width, height = self.geometry()
+        return Note(
+            id=self.note_id,
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            text=self.text,
+            order=self.order,
+            color=self.color,
+            created_at=self.created_at,
+            edited_at=self.edited_at,
+            adjusted_at=self.adjusted_at,
+            metadata=self.metadata,
+        )
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange:
+            return QPointF(round(value.x()), round(value.y()))
+        return super().itemChange(change, value)
+
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton and self.isSelected():
             corner = self._get_corner_at(event.pos())
@@ -252,8 +279,8 @@ class NoteItem(QGraphicsRectItem):
     def mouseMoveEvent(self, event) -> None:
         if self._resizing and self._drag_start_rect:
             delta = event.pos() - self._drag_start_pos
-            new_width = max(MIN_WIDTH, self._drag_start_rect.width() + delta.x())
-            new_height = max(MIN_HEIGHT, self._drag_start_rect.height() + delta.y())
+            new_width = max(MIN_WIDTH, round(self._drag_start_rect.width() + delta.x()))
+            new_height = max(MIN_HEIGHT, round(self._drag_start_rect.height() + delta.y()))
             self.setRect(0, 0, new_width, new_height)
             event.accept()
             return
@@ -262,10 +289,9 @@ class NoteItem(QGraphicsRectItem):
 
     def mouseReleaseEvent(self, event) -> None:
         if self._resizing and self._drag_start_rect:
-            old_w = self._drag_start_rect.width()
-            old_h = self._drag_start_rect.height()
-            new_w = self.rect().width()
-            new_h = self.rect().height()
+            old_w = round(self._drag_start_rect.width())
+            old_h = round(self._drag_start_rect.height())
+            _, _, new_w, new_h = self.geometry()
             if old_w != new_w or old_h != new_h:
                 self.adjusted_at = utc_now()
                 self.signals.resized.emit(self.note_id, old_w, old_h, new_w, new_h)
@@ -278,13 +304,11 @@ class NoteItem(QGraphicsRectItem):
             return
 
         if self._move_start_pos is not None:
-            old_pos = self._move_start_pos
-            new_pos = self.pos()
-            if old_pos != new_pos:
+            old_x, old_y = round(self._move_start_pos.x()), round(self._move_start_pos.y())
+            new_x, new_y, _, _ = self.geometry()
+            if (old_x, old_y) != (new_x, new_y):
                 self.adjusted_at = utc_now()
-                self.signals.moved.emit(
-                    self.note_id, old_pos.x(), old_pos.y(), new_pos.x(), new_pos.y()
-                )
+                self.signals.moved.emit(self.note_id, old_x, old_y, new_x, new_y)
                 self.signals.changed.emit()
             self._move_start_pos = None
 

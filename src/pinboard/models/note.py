@@ -10,10 +10,10 @@ def utc_now() -> str:
 @dataclass
 class Note:
     id: int
-    x: float
-    y: float
-    width: float
-    height: float
+    x: int
+    y: int
+    width: int
+    height: int
     text: str
     order: int
     color: tuple[int, int, int, int] = field(default_factory=lambda: (255, 255, 200, 255))
@@ -21,6 +21,12 @@ class Note:
     edited_at: str | None = None
     adjusted_at: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for name in ("x", "y", "width", "height"):
+            value = getattr(self, name)
+            if type(value) is not int:
+                raise ValueError(f"Note {self.id} {name} must be whole pixels, got {value!r}")
 
     def to_dict(self) -> dict:
         d = {

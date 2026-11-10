@@ -103,6 +103,9 @@ notes:
       ticket: ENG-441
 ```
 
+`x`, `y`, `width` and `height` are whole pixels, written as integers; a board holding any other
+value there fails to load, and the GUI snaps moves and resizes to whole pixels.
+
 Timestamps use ISO 8601 UTC format. `created_at` is set when a note is created. `edited_at` is updated when text content changes. `adjusted_at` is updated when position, size, z-order, or color changes.
 
 `metadata` is a free-form mapping for other tools to hang their own keys off a note, kept out of

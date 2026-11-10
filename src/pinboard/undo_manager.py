@@ -59,11 +59,11 @@ class CompositeAction(Action):
 @dataclass
 class MoveNoteAction(Action):
     note_id: int
-    old_x: float
-    old_y: float
-    new_x: float
-    new_y: float
-    update_callback: Callable[[int, float, float], None]
+    old_x: int
+    old_y: int
+    new_x: int
+    new_y: int
+    update_callback: Callable[[int, int, int], None]
 
     def undo(self) -> None:
         self.update_callback(self.note_id, self.old_x, self.old_y)
@@ -75,11 +75,11 @@ class MoveNoteAction(Action):
 @dataclass
 class ResizeNoteAction(Action):
     note_id: int
-    old_width: float
-    old_height: float
-    new_width: float
-    new_height: float
-    update_callback: Callable[[int, float, float], None]
+    old_width: int
+    old_height: int
+    new_width: int
+    new_height: int
+    update_callback: Callable[[int, int, int], None]
 
     def undo(self) -> None:
         self.update_callback(self.note_id, self.old_width, self.old_height)
